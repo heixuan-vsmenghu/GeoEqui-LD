@@ -318,7 +318,7 @@ def main(argv: list[str] | None = None) -> int:
         },
         "runtime": {
             "resolved_device": str(device),
-            "torch_version": torch.__version__,
+            "torch_version": str(torch.__version__),
             "git_commit": _git_commit(),
         },
     }
