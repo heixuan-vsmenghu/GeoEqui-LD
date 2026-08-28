@@ -1,6 +1,6 @@
 # GeoEqui-LD
 
-GeoEqui-LD 是一个面向产时超声三关键点检测的毕业设计工程。项目最终希望研究几何等变一致性能否帮助模型利用无标签图像；Phase 0 基础闭环已经冻结，**Phase 0.5 监督损失审计也已完成**。
+GeoEqui-LD 是一个面向产时超声三关键点检测的毕业设计工程。项目最终希望研究几何等变一致性能否帮助模型利用无标签图像；Phase 0 基础闭环已经冻结，Phase 0.5 监督损失审计和 **Phase 0.6 长预算忠实性检查**也已完成。
 
 目前没有把完整半监督方案包装成“已经实现”：本地尚未取得完整无标签池，因此 EMA 教师、伪标签筛选和无标签几何一致性训练都还没有开始。
 
@@ -36,7 +36,7 @@ DSNT 坐标    [B, 3, 2]，顺序为 [x, y]，范围为 [-1, 1]
 - 可微 DSNT；
 - DSNT 概率图的 Gaussian 分布约束，避免只优化坐标却得到不可解释的响应图；
 - 一个输入单通道、输出三通道半分辨率热图的小型 U-Net；
-- 坐标、热图、DSNT、AoP、变换、指标、访问策略、模型、监督训练和结果汇总共 59 项单元测试通过；
+- 坐标、热图、DSNT、AoP、变换、指标、访问策略、模型、监督训练和结果汇总共 94 项测试通过；
 - 4 张真实训练图上的 tiny-overfit 门槛已经通过。
 - 300/100 监督 baseline 已完成，并在方案冻结后对 testing 评估一次。
 
@@ -77,6 +77,29 @@ python scripts/train_phase05.py --protocol configs/phase05_ablation.yaml `
 [完整监督消融记录](reports/phase05/SUPERVISED_ABLATION.md)。这里只作 3 个确认种子的 validation 描述性复核，不声称统计显著或测试集结论。
 
 Phase 0 原始 20 轮运行对应的脱敏快照保存在 [configs/phase0_frozen_20e.yaml](configs/phase0_frozen_20e.yaml)，不再用早期的 150 轮通用模板代替实际运行配置。
+
+## Phase 0.6 长预算检查
+
+Phase 0.6 没有改模型或调损失权重，只把 seed 42 下的 B0/B1/B2 用完全相同的
+初始化、数据顺序和优化设置跑满 200 轮，用来判断 20 轮结果是不是单纯由收敛速度
+造成。checkpoint 仍只按 validation AoP MAE、MRE_ALL、较早 epoch 依次选择，
+testing 全程冻结。
+
+| 方案 | best epoch | MRE_ALL | AoP MAE |
+|---|---:|---:|---:|
+| B0：MSE | 120 | 148.471 px | 20.551° |
+| B1：MSE + coordinate SmoothL1 | 194 | 27.084 px | 8.767° |
+| B2：B1 + JS | 15 | 24.779 px | 8.514° |
+
+B0 在 20 轮后确实还有改善，但没有追上 B1/B2，并在 epoch 187–200 连续出现
+0 个有效 AoP 预测。B1 的优势一直保持到 epoch 200；B2 很早取得更好的 selected
+best，但 epoch 200 的两项主指标反而略差于 B1，因此 JS 在这次单 seed 检查中主要
+体现为加快收敛，不能据此声称改善长期稳定性。
+
+完整数字和边界见 [Phase 0.6 小结](reports/phase06/PHASE06_SUMMARY.md)、
+[200 轮逐节点对照](reports/phase06/LONG_BUDGET_COMPARISON.md)和
+[validation 曲线](reports/phase06/curves/validation_metrics.png)。这里只是增强监督
+基线审计，不包含 HRNet、PS/FH 解耦、EMA、伪标签或半监督损失。
 
 ## 数据现状
 
@@ -129,7 +152,7 @@ python -m pytest -q -p no:cacheprovider
 最新完整测试结果：
 
 ```text
-59 passed
+94 passed
 ```
 
 ## 当前边界

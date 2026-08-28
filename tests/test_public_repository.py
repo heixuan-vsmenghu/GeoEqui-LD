@@ -10,11 +10,18 @@ from PIL import Image
 PUBLIC_BINARY_ALLOWLIST = {
     "reports/phase05/curves/confirmation_validation_metrics.png",
     "reports/phase05/curves/seed42_validation_metrics.png",
+    "reports/phase06/curves/validation_metrics.png",
 }
 PUBLIC_PHASE05_TEXT = {
     "reports/phase05/PHASE05_SUMMARY.md",
     "reports/phase05/SUPERVISED_ABLATION.md",
     "reports/phase05/aggregate_results.json",
+}
+PUBLIC_PHASE06_TEXT = {
+    "reports/phase06/PHASE06_SUMMARY.md",
+    "reports/phase06/LONG_BUDGET_COMPARISON.md",
+    "reports/phase06/aggregate_results.json",
+    "reports/phase06/sanitized_config.yaml",
 }
 PUBLIC_FORBIDDEN_FIELDS = {
     "protocol_sha256",
@@ -59,23 +66,19 @@ def test_tracked_text_does_not_contain_machine_paths() -> None:
         assert windows_drive.search(text) is None, f"Machine path found in {relative}"
 
 
-def test_phase05_public_outputs_are_sanitized() -> None:
+def test_public_outputs_are_sanitized() -> None:
     root = Path(__file__).resolve().parents[1]
     tracked = set(_tracked_files())
     digest = re.compile(r"\b(?:[0-9a-f]{40}|[0-9a-f]{64})\b")
     unix_machine_path = re.compile(r"(?<![A-Za-z0-9:])/(?:home|Users|mnt|tmp|var/tmp)/")
     unc_path = re.compile(r"\\\\[^\\\s]+\\[^\\\s]+")
-    for relative in PUBLIC_PHASE05_TEXT:
-        assert relative in tracked, f"Missing tracked Phase 0.5 output: {relative}"
+    for relative in PUBLIC_PHASE05_TEXT | PUBLIC_PHASE06_TEXT:
+        assert relative in tracked, f"Missing tracked public output: {relative}"
         text = (root / relative).read_text(encoding="utf-8")
         assert digest.search(text) is None, f"Digest found in {relative}"
         assert unix_machine_path.search(text) is None, f"Unix machine path found in {relative}"
         assert unc_path.search(text) is None, f"UNC path found in {relative}"
         assert not any(field in text for field in PUBLIC_FORBIDDEN_FIELDS)
-
-    aggregate = json.loads(
-        (root / "reports/phase05/aggregate_results.json").read_text(encoding="utf-8")
-    )
 
     def check_keys(value: object) -> None:
         if isinstance(value, dict):
@@ -86,10 +89,15 @@ def test_phase05_public_outputs_are_sanitized() -> None:
             for item in value:
                 check_keys(item)
 
-    check_keys(aggregate)
+    for relative in (
+        "reports/phase05/aggregate_results.json",
+        "reports/phase06/aggregate_results.json",
+    ):
+        aggregate = json.loads((root / relative).read_text(encoding="utf-8"))
+        check_keys(aggregate)
 
 
-def test_phase05_public_png_metadata_is_sanitized() -> None:
+def test_public_png_metadata_is_sanitized() -> None:
     root = Path(__file__).resolve().parents[1]
     tracked = set(_tracked_files())
     machine_path = re.compile(
@@ -98,7 +106,7 @@ def test_phase05_public_png_metadata_is_sanitized() -> None:
     )
     digest = re.compile(r"\b(?:[0-9a-f]{40}|[0-9a-f]{64})\b")
     for relative in PUBLIC_BINARY_ALLOWLIST:
-        assert relative in tracked, f"Missing tracked Phase 0.5 curve: {relative}"
+        assert relative in tracked, f"Missing tracked public curve: {relative}"
         with Image.open(root / relative) as image:
             metadata = json.dumps(image.info, sort_keys=True, default=str)
         assert machine_path.search(metadata) is None, f"Machine path found in {relative} metadata"

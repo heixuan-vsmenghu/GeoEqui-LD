@@ -1378,7 +1378,7 @@ def _milestone_table(run: Mapping[str, Any]) -> str:
 
 def _conclusion_list(aggregate: Mapping[str, Any]) -> str:
     return "\n\n".join(
-        f"{item['number']}. **{item['question']}**  \n{item['answer']}"
+        f"{item['number']}. **{item['question']}**\n\n   {item['answer']}"
         for item in aggregate["conclusions"]
     )
 
@@ -1446,6 +1446,20 @@ def _render_detailed(aggregate: Mapping[str, Any]) -> str:
     post20 = aggregate["comparisons"]["B0_after_epoch20"]
     coordinate = aggregate["comparisons"]["coordinate_term_B1_against_B0"]
     js = aggregate["comparisons"]["JS_term_B2_against_B1"]
+    coordinate_aop_reduction = 100.0 * float(
+        coordinate["relative_reduction_at_best"]["aop_mae_deg"]
+    )
+    coordinate_mre_reduction = 100.0 * float(
+        coordinate["relative_reduction_at_best"]["MRE_ALL"]
+    )
+    js_aop_reduction = 100.0 * float(js["relative_reduction_at_best"]["aop_mae_deg"])
+    js_mre_reduction = 100.0 * float(js["relative_reduction_at_best"]["MRE_ALL"])
+    js_endpoint_aop_delta = float(
+        js["epoch200_metric_delta_candidate_minus_reference"]["aop_mae_deg"]
+    )
+    js_endpoint_mre_delta = float(
+        js["epoch200_metric_delta_candidate_minus_reference"]["MRE_ALL"]
+    )
     return f"""# Phase 0.6：200 轮监督忠实性比较
 
 ## 固定条件
@@ -1492,13 +1506,19 @@ zero-valid 表示该轮没有一个有效的预测 AoP；full-collapse 进一步
   epoch={coordinate["reference_best_epoch"]}；B1 首次同时达到 B0 best 的 AoP MAE 与
   MRE_ALL 阈值：
   {_format_epoch(coordinate["earliest_epoch_matching_reference_best_on_both_primary_metrics"])}。
+  相对 B0 best，B1 best 的 AoP MAE 下降 {coordinate_aop_reduction:.2f}%，
+  MRE_ALL 下降 {coordinate_mre_reduction:.2f}%，且优势保持到 epoch 200。
 - JS 项：B2 best epoch={js["candidate_best_epoch"]}，B1 best
   epoch={js["reference_best_epoch"]}；B2 首次同时达到 B1 best 的两项阈值：
   {_format_epoch(js["earliest_epoch_matching_reference_best_on_both_primary_metrics"])}。
+  相对 B1 best，B2 best 的 AoP MAE 下降 {js_aop_reduction:.2f}%，MRE_ALL 下降
+  {js_mre_reduction:.2f}%；但在 epoch 200，B2-B1 的 AoP MAE 为
+  +{js_endpoint_aop_delta:.3f}°，MRE_ALL 为 +{js_endpoint_mre_delta:.3f} px，二者均更差。
 
-这里把“最终性能改变”定义为：best 在两项主指标上均不差，且至少一项相对改善 5%；
-把“加快收敛”定义为：增强方案早于参照方案的 best epoch，同时达到参照 best 的
-两项阈值。这只是透明的描述性口径，不是统计检验。
+这里把“主要改变最终性能”定义为：selected best 在两项主指标上均不差，至少一项
+相对改善 5%，并且这种优势在 epoch 200 端点仍没有反转；把“主要加快收敛”定义为：
+增强方案早于参照方案的 best epoch，同时达到参照 best 的两项阈值，但不满足上述
+持续保持规则。这只是透明的描述性口径，不是统计检验。
 
 ## 五个结论
 

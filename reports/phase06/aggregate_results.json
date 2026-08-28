@@ -1,0 +1,546 @@
+{
+  "schema_version": 1,
+  "phase": "phase0.6-long-budget-fidelity",
+  "scope": "supervised train/validation long-budget fidelity check",
+  "selection_split": "validation",
+  "testing_frozen": true,
+  "metric_units": {
+    "MRE_PS1": "PS1 MRE (px)",
+    "MRE_PS2": "PS2 MRE (px)",
+    "MRE_FH1": "FH1 MRE (px)",
+    "MRE_ALL": "Overall MRE (px)",
+    "aop_mae_deg": "AoP MAE (deg)"
+  },
+  "lower_is_better": [
+    "MRE_PS1",
+    "MRE_PS2",
+    "MRE_FH1",
+    "MRE_ALL",
+    "aop_mae_deg"
+  ],
+  "protocol": {
+    "seed": 42,
+    "epochs": 200,
+    "milestones": [
+      20,
+      50,
+      100,
+      150,
+      200
+    ],
+    "checkpoint_selection": [
+      "aop_mae_deg",
+      "MRE_ALL",
+      "earlier_epoch"
+    ],
+    "training": {
+      "input_size_hw": [
+        512,
+        512
+      ],
+      "heatmap_size_hw": [
+        256,
+        256
+      ],
+      "sigma_heatmap_px": 4.0,
+      "align_corners": true,
+      "dsnt_temperature": 0.05,
+      "keypoint_order": [
+        "PS1",
+        "PS2",
+        "FH1"
+      ],
+      "base_channels": 8,
+      "batch_size": 1,
+      "epochs": 200,
+      "learning_rate": 0.001,
+      "weight_decay": 0.0001,
+      "max_grad_norm": 5.0,
+      "num_workers": 0
+    },
+    "optimizer": {
+      "class": "Adam",
+      "betas": [
+        0.9,
+        0.999
+      ],
+      "eps": 1e-08,
+      "amsgrad": false
+    },
+    "data_sample_counts": {
+      "train": 300,
+      "validation": 100
+    },
+    "variants": {
+      "B0": {
+        "description": "heatmap MSE"
+      },
+      "B1": {
+        "description": "heatmap MSE + coordinate SmoothL1"
+      },
+      "B2": {
+        "description": "heatmap MSE + coordinate SmoothL1 + distribution JS"
+      }
+    }
+  },
+  "model": {
+    "class": "HeatmapUNet",
+    "trainable_parameters": 484171
+  },
+  "runs": [
+    {
+      "variant": "B0",
+      "seed": 42,
+      "best_epoch": 120,
+      "checkpoints": {
+        "20": {
+          "epoch": 20,
+          "metrics": {
+            "MRE_PS1": 184.5712432861328,
+            "MRE_PS2": 184.65037536621094,
+            "MRE_FH1": 83.83311462402344,
+            "MRE_ALL": 151.0182342529297,
+            "aop_mae_deg": 37.3331184387207
+          }
+        },
+        "50": {
+          "epoch": 50,
+          "metrics": {
+            "MRE_PS1": 182.53887939453125,
+            "MRE_PS2": 177.15309143066406,
+            "MRE_FH1": 84.13658142089844,
+            "MRE_ALL": 147.94285583496094,
+            "aop_mae_deg": 23.91590118408203
+          }
+        },
+        "100": {
+          "epoch": 100,
+          "metrics": {
+            "MRE_PS1": 180.40911865234375,
+            "MRE_PS2": 184.28883361816406,
+            "MRE_FH1": 83.88052368164062,
+            "MRE_ALL": 149.52615356445312,
+            "aop_mae_deg": 60.846954345703125
+          }
+        },
+        "150": {
+          "epoch": 150,
+          "metrics": {
+            "MRE_PS1": 182.97433471679688,
+            "MRE_PS2": 119.33782196044922,
+            "MRE_FH1": 84.18773651123047,
+            "MRE_ALL": 128.8332977294922,
+            "aop_mae_deg": 43.96296310424805
+          }
+        },
+        "200": {
+          "epoch": 200,
+          "metrics": {
+            "MRE_PS1": 187.4218292236328,
+            "MRE_PS2": 190.26271057128906,
+            "MRE_FH1": 84.16870880126953,
+            "MRE_ALL": 153.9510955810547,
+            "aop_mae_deg": 180.0
+          }
+        },
+        "best": {
+          "epoch": 120,
+          "metrics": {
+            "MRE_PS1": 181.90528869628906,
+            "MRE_PS2": 179.62606811523438,
+            "MRE_FH1": 83.88262939453125,
+            "MRE_ALL": 148.47132873535156,
+            "aop_mae_deg": 20.55132484436035
+          }
+        }
+      },
+      "aop_validity_diagnostics": {
+        "any_invalid_prediction_epoch_count": 15,
+        "any_invalid_prediction_epochs": [
+          177,
+          187,
+          188,
+          189,
+          190,
+          191,
+          192,
+          193,
+          194,
+          195,
+          196,
+          197,
+          198,
+          199,
+          200
+        ],
+        "first_any_invalid_prediction_epoch": 177,
+        "last_any_invalid_prediction_epoch": 200,
+        "zero_valid_epoch_count": 14,
+        "zero_valid_epochs": [
+          187,
+          188,
+          189,
+          190,
+          191,
+          192,
+          193,
+          194,
+          195,
+          196,
+          197,
+          198,
+          199,
+          200
+        ],
+        "full_collapse_epoch_count": 14,
+        "full_collapse_epochs": [
+          187,
+          188,
+          189,
+          190,
+          191,
+          192,
+          193,
+          194,
+          195,
+          196,
+          197,
+          198,
+          199,
+          200
+        ],
+        "first_full_collapse_epoch": 187,
+        "last_full_collapse_epoch": 200,
+        "full_collapse_after_epoch20_count": 14,
+        "full_collapse_after_epoch20_epochs": [
+          187,
+          188,
+          189,
+          190,
+          191,
+          192,
+          193,
+          194,
+          195,
+          196,
+          197,
+          198,
+          199,
+          200
+        ]
+      }
+    },
+    {
+      "variant": "B1",
+      "seed": 42,
+      "best_epoch": 194,
+      "checkpoints": {
+        "20": {
+          "epoch": 20,
+          "metrics": {
+            "MRE_PS1": 21.436595916748047,
+            "MRE_PS2": 40.078041076660156,
+            "MRE_FH1": 49.49968338012695,
+            "MRE_ALL": 37.0047721862793,
+            "aop_mae_deg": 13.457083702087402
+          }
+        },
+        "50": {
+          "epoch": 50,
+          "metrics": {
+            "MRE_PS1": 22.29620933532715,
+            "MRE_PS2": 37.151527404785156,
+            "MRE_FH1": 49.578758239746094,
+            "MRE_ALL": 36.3421630859375,
+            "aop_mae_deg": 12.90622329711914
+          }
+        },
+        "100": {
+          "epoch": 100,
+          "metrics": {
+            "MRE_PS1": 17.305334091186523,
+            "MRE_PS2": 35.93171310424805,
+            "MRE_FH1": 48.35847473144531,
+            "MRE_ALL": 33.86517333984375,
+            "aop_mae_deg": 13.609977722167969
+          }
+        },
+        "150": {
+          "epoch": 150,
+          "metrics": {
+            "MRE_PS1": 16.382617950439453,
+            "MRE_PS2": 28.121776580810547,
+            "MRE_FH1": 45.848114013671875,
+            "MRE_ALL": 30.11750030517578,
+            "aop_mae_deg": 11.962058067321777
+          }
+        },
+        "200": {
+          "epoch": 200,
+          "metrics": {
+            "MRE_PS1": 15.160386085510254,
+            "MRE_PS2": 21.2561092376709,
+            "MRE_FH1": 46.82664489746094,
+            "MRE_ALL": 27.74771499633789,
+            "aop_mae_deg": 9.035155296325684
+          }
+        },
+        "best": {
+          "epoch": 194,
+          "metrics": {
+            "MRE_PS1": 15.454789161682129,
+            "MRE_PS2": 20.514049530029297,
+            "MRE_FH1": 45.283443450927734,
+            "MRE_ALL": 27.08409309387207,
+            "aop_mae_deg": 8.766711235046387
+          }
+        }
+      },
+      "aop_validity_diagnostics": {
+        "any_invalid_prediction_epoch_count": 0,
+        "any_invalid_prediction_epochs": [],
+        "first_any_invalid_prediction_epoch": null,
+        "last_any_invalid_prediction_epoch": null,
+        "zero_valid_epoch_count": 0,
+        "zero_valid_epochs": [],
+        "full_collapse_epoch_count": 0,
+        "full_collapse_epochs": [],
+        "first_full_collapse_epoch": null,
+        "last_full_collapse_epoch": null,
+        "full_collapse_after_epoch20_count": 0,
+        "full_collapse_after_epoch20_epochs": []
+      }
+    },
+    {
+      "variant": "B2",
+      "seed": 42,
+      "best_epoch": 15,
+      "checkpoints": {
+        "20": {
+          "epoch": 20,
+          "metrics": {
+            "MRE_PS1": 14.903982162475586,
+            "MRE_PS2": 19.397109985351562,
+            "MRE_FH1": 43.357643127441406,
+            "MRE_ALL": 25.886245727539062,
+            "aop_mae_deg": 10.561722755432129
+          }
+        },
+        "50": {
+          "epoch": 50,
+          "metrics": {
+            "MRE_PS1": 14.438992500305176,
+            "MRE_PS2": 31.367515563964844,
+            "MRE_FH1": 43.811439514160156,
+            "MRE_ALL": 29.872650146484375,
+            "aop_mae_deg": 12.920807838439941
+          }
+        },
+        "100": {
+          "epoch": 100,
+          "metrics": {
+            "MRE_PS1": 20.509166717529297,
+            "MRE_PS2": 29.68468475341797,
+            "MRE_FH1": 47.452083587646484,
+            "MRE_ALL": 32.54864501953125,
+            "aop_mae_deg": 14.195865631103516
+          }
+        },
+        "150": {
+          "epoch": 150,
+          "metrics": {
+            "MRE_PS1": 17.770620346069336,
+            "MRE_PS2": 52.232276916503906,
+            "MRE_FH1": 40.90205383300781,
+            "MRE_ALL": 36.968318939208984,
+            "aop_mae_deg": 22.5019474029541
+          }
+        },
+        "200": {
+          "epoch": 200,
+          "metrics": {
+            "MRE_PS1": 16.90277671813965,
+            "MRE_PS2": 23.733449935913086,
+            "MRE_FH1": 43.295352935791016,
+            "MRE_ALL": 27.97719383239746,
+            "aop_mae_deg": 12.623998641967773
+          }
+        },
+        "best": {
+          "epoch": 15,
+          "metrics": {
+            "MRE_PS1": 13.416825294494629,
+            "MRE_PS2": 20.357471466064453,
+            "MRE_FH1": 40.56401062011719,
+            "MRE_ALL": 24.779436111450195,
+            "aop_mae_deg": 8.513850212097168
+          }
+        }
+      },
+      "aop_validity_diagnostics": {
+        "any_invalid_prediction_epoch_count": 0,
+        "any_invalid_prediction_epochs": [],
+        "first_any_invalid_prediction_epoch": null,
+        "last_any_invalid_prediction_epoch": null,
+        "zero_valid_epoch_count": 0,
+        "zero_valid_epochs": [],
+        "full_collapse_epoch_count": 0,
+        "full_collapse_epochs": [],
+        "first_full_collapse_epoch": null,
+        "last_full_collapse_epoch": null,
+        "full_collapse_after_epoch20_count": 0,
+        "full_collapse_after_epoch20_epochs": []
+      }
+    }
+  ],
+  "comparisons": {
+    "B0_after_epoch20": {
+      "epoch20": {
+        "epoch": 20,
+        "metrics": {
+          "MRE_PS1": 184.5712432861328,
+          "MRE_PS2": 184.65037536621094,
+          "MRE_FH1": 83.83311462402344,
+          "MRE_ALL": 151.0182342529297,
+          "aop_mae_deg": 37.3331184387207
+        }
+      },
+      "best_after_epoch20": {
+        "epoch": 120,
+        "metrics": {
+          "MRE_PS1": 181.90528869628906,
+          "MRE_PS2": 179.62606811523438,
+          "MRE_FH1": 83.88262939453125,
+          "MRE_ALL": 148.47132873535156,
+          "aop_mae_deg": 20.55132484436035
+        }
+      },
+      "relative_reduction_from_epoch20": {
+        "aop_mae_deg": 0.449514915875734,
+        "MRE_ALL": 0.016864887410301024
+      },
+      "clearly_improved_by_descriptive_rule": true,
+      "descriptive_rule": "post-20 best AoP MAE is at least 5% lower than epoch 20 and MRE_ALL does not worsen"
+    },
+    "B0_against_augmented": {
+      "B1": {
+        "best_within_200_relation": "worse_or_equal_on_both",
+        "epoch200_relation": "worse_or_equal_on_both",
+        "best_metric_delta_B0_minus_target": {
+          "aop_mae_deg": 11.784613609313965,
+          "MRE_ALL": 121.38723564147949
+        },
+        "epoch200_metric_delta_B0_minus_target": {
+          "aop_mae_deg": 170.96484470367432,
+          "MRE_ALL": 126.2033805847168
+        }
+      },
+      "B2": {
+        "best_within_200_relation": "worse_or_equal_on_both",
+        "epoch200_relation": "worse_or_equal_on_both",
+        "best_metric_delta_B0_minus_target": {
+          "aop_mae_deg": 12.037474632263184,
+          "MRE_ALL": 123.69189262390137
+        },
+        "epoch200_metric_delta_B0_minus_target": {
+          "aop_mae_deg": 167.37600135803223,
+          "MRE_ALL": 125.97390174865723
+        }
+      }
+    },
+    "coordinate_term_B1_against_B0": {
+      "candidate": "B1",
+      "reference": "B0",
+      "best_relation": "better_or_equal_on_both",
+      "best_metric_delta_candidate_minus_reference": {
+        "aop_mae_deg": -11.784613609313965,
+        "MRE_ALL": -121.38723564147949
+      },
+      "epoch200_relation": "better_or_equal_on_both",
+      "epoch200_metric_delta_candidate_minus_reference": {
+        "aop_mae_deg": -170.96484470367432,
+        "MRE_ALL": -126.2033805847168
+      },
+      "relative_reduction_at_best": {
+        "aop_mae_deg": 0.5734235480467271,
+        "MRE_ALL": 0.8175803144986387
+      },
+      "candidate_best_epoch": 194,
+      "reference_best_epoch": 120,
+      "earliest_epoch_matching_reference_best_on_both_primary_metrics": 5,
+      "selected_best_benefit": true,
+      "sustained_endpoint_benefit": true,
+      "classification": "mainly_final_performance",
+      "descriptive_rule": "final: selected best dominates both primary metrics, improves at least one by 5%, and the epoch-200 endpoint is no worse on both; speed: reaches both reference-best thresholds before the reference best epoch without satisfying that sustained rule"
+    },
+    "JS_term_B2_against_B1": {
+      "candidate": "B2",
+      "reference": "B1",
+      "best_relation": "better_or_equal_on_both",
+      "best_metric_delta_candidate_minus_reference": {
+        "aop_mae_deg": -0.25286102294921875,
+        "MRE_ALL": -2.304656982421875
+      },
+      "epoch200_relation": "worse_or_equal_on_both",
+      "epoch200_metric_delta_candidate_minus_reference": {
+        "aop_mae_deg": 3.58884334564209,
+        "MRE_ALL": 0.2294788360595703
+      },
+      "relative_reduction_at_best": {
+        "aop_mae_deg": 0.02884331605886193,
+        "MRE_ALL": 0.08509263996523911
+      },
+      "candidate_best_epoch": 15,
+      "reference_best_epoch": 194,
+      "earliest_epoch_matching_reference_best_on_both_primary_metrics": 15,
+      "selected_best_benefit": true,
+      "sustained_endpoint_benefit": false,
+      "classification": "mainly_convergence_speed",
+      "descriptive_rule": "final: selected best dominates both primary metrics, improves at least one by 5%, and the epoch-200 endpoint is no worse on both; speed: reaches both reference-best thresholds before the reference best epoch without satisfying that sustained rule"
+    }
+  },
+  "conclusions": [
+    {
+      "number": 1,
+      "question": "B0在200轮后是否追上B1或B2？",
+      "answer": "对 B1，预算内best：两项主指标均更高，未追上；epoch 200端点：两项主指标均更高，未追上；对 B2，预算内best：两项主指标均更高，未追上；epoch 200端点：两项主指标均更高，未追上。这是seed 42的描述性结果。"
+    },
+    {
+      "number": 2,
+      "question": "坐标项主要改变最终性能，还是主要加快收敛？",
+      "answer": "坐标项（B1相对B0）主要改变最终性能，同时也加快了收敛；同时第 5 轮已达到参照方案在第 120 轮取得的最佳双指标。这里只基于一个seed，不作统计显著性判断。"
+    },
+    {
+      "number": 3,
+      "question": "JS项主要改变最终性能，还是主要加快收敛？",
+      "answer": "JS项（B2相对B1）主要表现为加快收敛：第 15 轮已达到参照方案在第 194 轮取得的最佳双指标；validation-selected best也更优，但epoch 200端点的两项主指标均更差，因此不能概括为持续改善最终性能或长期稳定性。这里只基于一个seed，不作统计显著性判断。"
+    },
+    {
+      "number": 4,
+      "question": "按老师原文采用纯MSE是否仍然具备可行性？",
+      "answer": "仅在工程/复现层面的监督基线意义上具备可行性。B0完整跑完200轮，五项主validation指标按既定惩罚规则保持有限，其best在第 120 轮；但第 187–200 轮连续出现0个有效AoP预测。因此它可训练、可复现，却不具备当前实验中的竞争性和长期稳定性，不能据此声称达到临床、实用或可靠最终方案的性能阈值。"
+    },
+    {
+      "number": 5,
+      "question": "B1/B2是否仍只能被称为增强监督基线？",
+      "answer": "是。B1/B2只是在同一有标注训练流程中增加坐标项或JS项，没有EMA教师、伪标签或无标注一致性目标，因此仍是增强监督基线。"
+    }
+  ],
+  "integrity": {
+    "validated_run_count": 3,
+    "epochs_per_run": 200,
+    "all_runs_share_data_identity": true,
+    "all_runs_share_model_initialization": true,
+    "all_runs_share_environment": true,
+    "all_epoch_training_orders_match": true,
+    "all_best_checkpoints_verified": true,
+    "all_best_tuples_recomputed": true,
+    "all_aop_validity_epochs_audited": true
+  },
+  "limitations": [
+    "validation-only; testing was not read or evaluated",
+    "one seed; descriptive comparison only and no significance claim",
+    "the same validation split selected and reported each best checkpoint",
+    "not the semi-supervised GeoEqui-LD system"
+  ]
+}
