@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "phase": "phase0.5-supervised-ablation",
+  "frozen_commit": "e351f3be10d5309bafe1ab9e2a1c69cc6744118c",
+  "frozen_tree": "159e7ec375e66855c69d68317f7a730cd93ba9b7",
+  "annotated_tag": "phase05-v0.1.0",
+  "annotated_tag_object": "ab61d3ed359fa8bcb6b167394f772ccba9201051",
+  "phase06_testing_policy": "frozen_no_read_no_evaluation",
+  "note": "Phase 0.6 is a train/validation-only 200-epoch supervised fidelity check; Phase 0.5 artifacts remain unchanged."
+}

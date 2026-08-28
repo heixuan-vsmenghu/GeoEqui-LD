@@ -29,5 +29,7 @@ jobs:
           python scripts/train_baseline.py --help
           python scripts/overfit_tiny.py --help
           python scripts/train_phase05.py --help
+          python scripts/train_phase06.py --help
           python scripts/select_phase05.py --help
           python scripts/summarize_phase05.py --help
+          python scripts/summarize_phase06.py --help
