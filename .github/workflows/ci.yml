@@ -30,3 +30,4 @@ jobs:
           python scripts/overfit_tiny.py --help
           python scripts/train_phase05.py --help
           python scripts/select_phase05.py --help
+          python scripts/summarize_phase05.py --help
