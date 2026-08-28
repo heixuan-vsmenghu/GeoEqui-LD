@@ -112,6 +112,30 @@ def test_supervised_loss_has_separate_heatmap_and_coordinate_gradients() -> None
     assert float(logits.grad.abs().sum()) > 0
 
 
+def test_heatmap_only_loss_skips_dsnt_and_js(monkeypatch: object) -> None:
+    sample = SyntheticLandmarks()[0]
+    logits = torch.zeros((1, 3, 16, 16), requires_grad=True)
+
+    def fail_if_called(*args: object, **kwargs: object) -> None:
+        raise AssertionError("spatial_softmax must not run for B0")
+
+    monkeypatch.setattr("geoequi_ld.training.engine.spatial_softmax", fail_if_called)  # type: ignore[attr-defined]
+    losses = compute_supervised_losses(
+        logits,
+        sample["heatmaps"].unsqueeze(0),  # type: ignore[union-attr]
+        sample["points_normalized"].unsqueeze(0),  # type: ignore[union-attr]
+        sample["valid_mask"].unsqueeze(0),  # type: ignore[union-attr]
+        dsnt=DSNT(temperature=0.05, align_corners=True),
+        heatmap_weight=1.0,
+        coordinate_weight=0.0,
+        distribution_weight=0.0,
+    )
+    assert losses.coordinate_smooth_l1.item() == 0.0
+    assert losses.distribution_js.item() == 0.0
+    losses.total.backward()
+    assert logits.grad is not None
+
+
 def test_train_for_steps_updates_parameters_and_honours_limit() -> None:
     seed_everything(7)
     config = tiny_config()
@@ -150,6 +174,24 @@ def test_evaluation_reports_original_pixel_mre_and_aop() -> None:
     assert metrics["n_valid_aop"] == 2
     assert float(metrics["MRE_ALL"]) < 0.05
     assert float(metrics["aop_mae_deg"]) < 0.05
+
+
+def test_evaluation_supports_argmax_on_the_same_checkpoint() -> None:
+    config = tiny_config()
+    dataset = SyntheticLandmarks()
+    loader = DataLoader(dataset, batch_size=2, shuffle=False)
+    model = LearnedHeatmaps(dataset.heatmaps)
+    metrics = evaluate_model(
+        model,
+        loader,
+        dsnt=DSNT(temperature=config.dsnt_temperature, align_corners=True),
+        device=torch.device("cpu"),
+        config=config,
+        decoder="argmax",
+    )
+    assert metrics["decoder"] == "argmax"
+    assert float(metrics["MRE_ALL"]) < 1e-5
+    assert float(metrics["aop_mae_deg"]) < 1e-5
 
 
 def test_checkpoint_round_trip_contains_required_provenance(tmp_path: Path) -> None:

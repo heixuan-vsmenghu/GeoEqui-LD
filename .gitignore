@@ -18,6 +18,7 @@ venv/
 
 # Local-only configuration
 configs/phase0_local.yaml
+configs/phase05_local.yaml
 
 # Restricted or machine-generated material
 /data/

@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import json
 import math
+import time
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -18,6 +19,7 @@ from torch.optim import Optimizer
 from geoequi_ld.geometry.aop import compute_aop
 from geoequi_ld.geometry.coordinates import normalized_to_pixel
 from geoequi_ld.metrics.keypoints import absolute_angle_error, summarize_keypoint_metrics
+from geoequi_ld.models.decoding import decode_heatmaps
 from geoequi_ld.models.dsnt import DSNT, spatial_expectation, spatial_softmax
 from geoequi_ld.training.checkpoints import save_checkpoint
 from geoequi_ld.training.config import SupervisedTrainingConfig
@@ -73,34 +75,46 @@ def compute_supervised_losses(
     per_keypoint_mse = (heatmap_logits - target_heatmaps).square().mean(dim=(-1, -2))
     heatmap_mse = _masked_mean(per_keypoint_mse, mask)
 
-    predicted_probabilities = spatial_softmax(
-        heatmap_logits,
-        temperature=dsnt.temperature,
-    )
-    predicted_normalized = spatial_expectation(
-        predicted_probabilities,
-        align_corners=dsnt.align_corners,
-    )
-    per_coordinate = F.smooth_l1_loss(
-        predicted_normalized,
-        target_normalized_xy,
-        reduction="none",
-    ).mean(dim=-1)
-    coordinate_smooth_l1 = _masked_mean(per_coordinate, mask)
-    target_probabilities = target_heatmaps / target_heatmaps.sum(
-        dim=(-1, -2),
-        keepdim=True,
-    ).clamp_min(1e-12)
-    mixture = 0.5 * (predicted_probabilities + target_probabilities)
-    eps = torch.finfo(heatmap_logits.dtype).eps
-    log_mixture = mixture.clamp_min(eps).log()
-    kl_prediction = (
-        predicted_probabilities * (predicted_probabilities.clamp_min(eps).log() - log_mixture)
-    ).sum(dim=(-1, -2))
-    kl_target = (
-        target_probabilities * (target_probabilities.clamp_min(eps).log() - log_mixture)
-    ).sum(dim=(-1, -2))
-    distribution_js = _masked_mean(0.5 * (kl_prediction + kl_target), mask)
+    zero = heatmap_logits.new_zeros(())
+    predicted_probabilities: Tensor | None = None
+    if coordinate_weight > 0 or distribution_weight > 0:
+        predicted_probabilities = spatial_softmax(
+            heatmap_logits,
+            temperature=dsnt.temperature,
+        )
+    if coordinate_weight > 0:
+        assert predicted_probabilities is not None
+        predicted_normalized = spatial_expectation(
+            predicted_probabilities,
+            align_corners=dsnt.align_corners,
+        )
+        per_coordinate = F.smooth_l1_loss(
+            predicted_normalized,
+            target_normalized_xy,
+            reduction="none",
+        ).mean(dim=-1)
+        coordinate_smooth_l1 = _masked_mean(per_coordinate, mask)
+    else:
+        coordinate_smooth_l1 = zero
+    if distribution_weight > 0:
+        assert predicted_probabilities is not None
+        target_probabilities = target_heatmaps / target_heatmaps.sum(
+            dim=(-1, -2),
+            keepdim=True,
+        ).clamp_min(1e-12)
+        mixture = 0.5 * (predicted_probabilities + target_probabilities)
+        eps = torch.finfo(heatmap_logits.dtype).eps
+        log_mixture = mixture.clamp_min(eps).log()
+        kl_prediction = (
+            predicted_probabilities
+            * (predicted_probabilities.clamp_min(eps).log() - log_mixture)
+        ).sum(dim=(-1, -2))
+        kl_target = (
+            target_probabilities * (target_probabilities.clamp_min(eps).log() - log_mixture)
+        ).sum(dim=(-1, -2))
+        distribution_js = _masked_mean(0.5 * (kl_prediction + kl_target), mask)
+    else:
+        distribution_js = zero
     total = (
         heatmap_weight * heatmap_mse
         + coordinate_weight * coordinate_smooth_l1
@@ -276,7 +290,8 @@ def evaluate_model(
     dsnt: DSNT,
     device: torch.device,
     config: SupervisedTrainingConfig,
-) -> dict[str, float | int]:
+    decoder: str = "dsnt",
+) -> dict[str, float | int | str]:
     """Evaluate losses, original-512-style MRE, and unsigned AoP MAE."""
 
     model.eval()
@@ -299,7 +314,12 @@ def evaluate_model(
         )
         batch_size = int(batch["image"].shape[0])
         _add_losses(accumulator, losses, batch_size)
-        normalized = dsnt(logits)
+        normalized = decode_heatmaps(
+            logits,
+            method=decoder,
+            dsnt=dsnt,
+            align_corners=config.align_corners,
+        )
         predicted_px = _normalized_batch_to_original_pixels(
             normalized,
             batch["original_size_hw"],
@@ -322,6 +342,7 @@ def evaluate_model(
             valid_mask=valid_mask,
         ),
         "n_samples": int(predicted.shape[0]),
+        "decoder": decoder,
     }
 
     predicted_aop, predicted_aop_valid = compute_aop(
@@ -372,7 +393,7 @@ def evaluate_model(
 def _json_safe(value: Any) -> Any:
     if isinstance(value, Mapping):
         return {str(key): _json_safe(item) for key, item in value.items()}
-    if isinstance(value, (list, tuple)):
+    if isinstance(value, list | tuple):
         return [_json_safe(item) for item in value]
     if isinstance(value, float) and not math.isfinite(value):
         return None
@@ -424,10 +445,13 @@ def fit_supervised(
     write_json(run_dir / "config.json", checkpoint_config)
     history: list[dict[str, Any]] = []
     best_value = math.inf
+    best_selection_key = (math.inf, math.inf, math.inf)
     best_epoch = -1
     best_metrics: dict[str, Any] | None = None
 
     for epoch in range(1, config.epochs + 1):
+        epoch_started = time.perf_counter()
+        train_started = time.perf_counter()
         train_metrics = train_one_epoch(
             model,
             train_loader,
@@ -436,6 +460,8 @@ def fit_supervised(
             device=device,
             config=config,
         )
+        train_time_sec = time.perf_counter() - train_started
+        validation_started = time.perf_counter()
         validation_metrics = evaluate_model(
             model,
             validation_loader,
@@ -443,12 +469,19 @@ def fit_supervised(
             device=device,
             config=config,
         )
-        row: dict[str, Any] = {"epoch": epoch}
+        validation_time_sec = time.perf_counter() - validation_started
+        row: dict[str, Any] = {
+            "epoch": epoch,
+            "train_time_sec": train_time_sec,
+            "validation_time_sec": validation_time_sec,
+            "epoch_time_sec": time.perf_counter() - epoch_started,
+        }
         row.update({f"train_{key}": value for key, value in train_metrics.items()})
         row.update({f"val_{key}": value for key, value in validation_metrics.items()})
         history.append(row)
         print(json.dumps(_json_safe(row), ensure_ascii=False), flush=True)
         metric_value = float(validation_metrics[config.checkpoint_metric])
+        mre_value = float(validation_metrics["MRE_ALL"])
         if not math.isfinite(metric_value):
             raise FloatingPointError(
                 f"Validation checkpoint metric {config.checkpoint_metric} is NaN or Inf"
@@ -462,8 +495,10 @@ def fit_supervised(
             seed=config.seed,
             metrics=validation_metrics,
         )
-        if metric_value < best_value:
+        selection_key = (metric_value, mre_value, float(epoch))
+        if selection_key < best_selection_key:
             best_value = metric_value
+            best_selection_key = selection_key
             best_epoch = epoch
             best_metrics = dict(validation_metrics)
             save_checkpoint(
@@ -481,6 +516,7 @@ def fit_supervised(
         "status": "completed",
         "selection_split": "validation",
         "checkpoint_metric": config.checkpoint_metric,
+        "selection_tiebreak": [config.checkpoint_metric, "MRE_ALL", "earlier_epoch"],
         "best_epoch": best_epoch,
         "best_value": best_value,
         "best_validation_metrics": best_metrics,

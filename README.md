@@ -1,6 +1,6 @@
 # GeoEqui-LD
 
-GeoEqui-LD 是一个面向产时超声三关键点检测的毕业设计工程。项目最终希望研究几何等变一致性能否帮助模型利用无标签图像；当前仓库仍处在 **Phase 0**，重点是先把数据解释、坐标换算、热图、AoP 计算和最小监督模型做正确。
+GeoEqui-LD 是一个面向产时超声三关键点检测的毕业设计工程。项目最终希望研究几何等变一致性能否帮助模型利用无标签图像；Phase 0 基础闭环已经冻结，当前进入 **Phase 0.5**，只审计监督损失设计。
 
 目前没有把完整半监督方案包装成“已经实现”：本地尚未取得完整无标签池，因此 EMA 教师、伪标签筛选和无标签几何一致性训练都还没有开始。
 
@@ -36,11 +36,35 @@ DSNT 坐标    [B, 3, 2]，顺序为 [x, y]，范围为 [-1, 1]
 - 可微 DSNT；
 - DSNT 概率图的 Gaussian 分布约束，避免只优化坐标却得到不可解释的响应图；
 - 一个输入单通道、输出三通道半分辨率热图的小型 U-Net；
-- 坐标、热图、DSNT、AoP、变换、指标、模型和监督训练基础模块共 33 项单元测试通过；
+- 坐标、热图、DSNT、AoP、变换、指标、访问策略、模型和监督训练共 48 项单元测试通过；
 - 4 张真实训练图上的 tiny-overfit 门槛已经通过。
 - 300/100 监督 baseline 已完成，并在方案冻结后对 testing 评估一次。
 
 这些内容说明基础工程可以继续做监督阶段验证，不代表半监督方法或最终论文实验已经完成。
+
+## Phase 0.5 监督消融
+
+Phase 0.5 固定 Phase 0 的数据、轻量 U-Net、随机种子规则和 20 轮预算，只比较三种损失：
+
+| 方案 | 损失 |
+|---|---|
+| B0 | heatmap MSE |
+| B1 | heatmap MSE + coordinate SmoothL1 |
+| B2 | heatmap MSE + coordinate SmoothL1 + distribution JS |
+
+三组统一使用 validation 上的 DSNT AoP MAE 选择 checkpoint；B0 还会在同一个 checkpoint 上比较 argmax 和 DSNT。首轮 seed=42，按预先固定的 AoP MAE、MRE_ALL、复杂度顺序留下两个方案，再用全新的 seeds 43/44/45 做确认，避免把筛选用的 seed 42 混进稳定性均值。Phase 0.5 的入口没有 testing 参数，并通过本地数据指纹和访问策略拒绝 testing。
+
+公开协议是 [configs/phase05_ablation.yaml](configs/phase05_ablation.yaml)。本地运行时复制 [configs/phase05_local.example.yaml](configs/phase05_local.example.yaml) 为被 Git 忽略的 `configs/phase05_local.yaml`，再运行：
+
+```powershell
+python scripts/train_phase05.py --protocol configs/phase05_ablation.yaml `
+  --local-config configs/phase05_local.yaml --variant B0 --seed 42 `
+  --output-dir runs/phase05/B0/seed_42
+```
+
+实验输出保存在被 Git 忽略的 `runs/`；公开仓库只接收脱敏聚合指标和曲线。
+
+Phase 0 原始 20 轮运行对应的脱敏快照保存在 [configs/phase0_frozen_20e.yaml](configs/phase0_frozen_20e.yaml)，不再用早期的 150 轮通用模板代替实际运行配置。
 
 ## 数据现状
 
@@ -93,7 +117,7 @@ python -m pytest -q -p no:cacheprovider
 最新完整测试结果：
 
 ```text
-33 passed
+48 passed
 ```
 
 ## 当前边界

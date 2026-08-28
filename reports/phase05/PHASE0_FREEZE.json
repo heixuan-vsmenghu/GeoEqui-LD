@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "phase": "phase0",
+  "frozen_commit": "f304271a238c9fcb97ac9eff070b946a4cedec62",
+  "annotated_tag": "phase0-v0.1.0",
+  "frozen_run_config": "configs/phase0_frozen_20e.yaml",
+  "frozen_run_config_sha256_lf": "0805c4ea2188476c0cc07f5c495d3dbdad062cce2a594bbadfbcb709a8944bd3",
+  "phase05_testing_policy": "frozen_no_read_no_evaluation",
+  "note": "Phase 0.5 is a train/validation-only supervised methodology audit."
+}

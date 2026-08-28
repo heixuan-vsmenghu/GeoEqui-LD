@@ -33,7 +33,7 @@ def parse_point(value: object) -> tuple[float, float]:
             parsed = ast.literal_eval(value.strip())
         except (SyntaxError, ValueError) as exc:
             raise ValueError(f"Invalid point literal: {value!r}") from exc
-    if not isinstance(parsed, (tuple, list)) or len(parsed) != 2:
+    if not isinstance(parsed, tuple | list) or len(parsed) != 2:
         raise ValueError(f"Expected a two-value point, got {parsed!r}")
     x, y = float(parsed[0]), float(parsed[1])
     if not np.isfinite([x, y]).all():

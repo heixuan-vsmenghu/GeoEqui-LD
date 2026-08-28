@@ -1,0 +1,18 @@
+phase: phase0.5
+splits:
+  train:
+    image_dir: <TRAIN_IMAGES>
+    labels_csv: <TRAIN_LABELS>
+    fh1_column: FH1
+    expected_fingerprint:
+      sample_count: <TRAIN_COUNT>
+      labels_sha256: <LOCAL_TRAIN_LABELS_SHA256>
+      aggregate_sha256: <LOCAL_TRAIN_AGGREGATE_SHA256>
+  validation:
+    image_dir: <VALIDATION_IMAGES>
+    labels_csv: <VALIDATION_LABELS>
+    fh1_column: AOP Tangency
+    expected_fingerprint:
+      sample_count: <VALIDATION_COUNT>
+      labels_sha256: <LOCAL_VALIDATION_LABELS_SHA256>
+      aggregate_sha256: <LOCAL_VALIDATION_AGGREGATE_SHA256>
