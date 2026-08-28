@@ -8,12 +8,12 @@
 
 | 项目 | 状态 |
 |---|---|
-| Git 分支 | `feature/phase0-data-baseline` |
+| Git 分支 | `main` |
 | 训练代码 HEAD | `d421cab667319070a44d5155c6abc0153925d6b3` |
-| 远程仓库 | 尚未绑定 |
+| 远程仓库 | `https://github.com/heixuan-vsmenghu/GeoEqui-LD`（Public） |
 | 监督训练产物 | 本地 Git 忽略目录，未公开 checkpoint/图像 |
 
-代码已经提交；公开前仍需做最终隐私扫描并补充 Phase 0 结果报告。
+代码与 Phase 0 脱敏报告已经推送到公开仓库。真实数据、checkpoint、运行日志和预测图未上传。
 
 ## 系统与硬件
 
