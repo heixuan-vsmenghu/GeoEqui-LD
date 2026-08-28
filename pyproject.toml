@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geoequi-ld"
+version = "0.1.0"
+description = "Phase 0 reference implementation for geometry-equivariant semi-supervised intrapartum ultrasound landmark detection"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+license = { file = "LICENSE" }
+authors = [{ name = "GeoEqui-LD contributors" }]
+dependencies = [
+  "matplotlib==3.10.0",
+  "numpy==1.26.4",
+  "pandas==2.2.3",
+  "Pillow==11.1.0",
+  "PyYAML==6.0.3",
+  "torch==2.5.1",
+  "torchvision==0.20.1",
+  "tqdm==4.67.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.11,<2",
+  "pytest==8.4.2",
+  "ruff>=0.9,<1",
+]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_unused_ignores = true
+warn_return_any = true
+disallow_untyped_defs = true

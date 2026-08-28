@@ -1,0 +1,34 @@
+# Python bytecode and tool caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local environments and editor state
+.venv/
+venv/
+.env
+.idea/
+.vscode/
+
+# Local-only configuration
+configs/phase0_local.yaml
+
+# Restricted or machine-generated material
+/data/
+/artifacts/
+/runs/
+/checkpoints/
+/reports/phase0/generated/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# Logs and operating-system files
+*.log
+Thumbs.db
+.DS_Store

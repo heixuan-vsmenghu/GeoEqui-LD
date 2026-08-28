@@ -1,0 +1,6 @@
+group_id,split,record_count,cross_split,max_label_disagreement_px,max_aop_disagreement_deg,note
+test_exact_001,testing,2,false,4.2426406871,1.3505841,"same image content; labels differ"
+test_exact_002,testing,2,false,8.94427191,1.6390246,"same image content; labels differ"
+test_exact_003,testing,4,false,14.8660687473,1.30235834,"same image content; labels differ"
+test_exact_004,testing,3,false,7.2801098893,2.61748922,"same image content; labels differ"
+test_exact_005,testing,2,false,15.2315462117,5.30637311,"same image content; labels differ"

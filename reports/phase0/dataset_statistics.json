@@ -1,0 +1,144 @@
+{
+  "schema_version": "1.0",
+  "audit_date": "2026-08-28",
+  "public_safe": true,
+  "scope": "IUGC 2025 public supervised splits and local unlabeled availability",
+  "supervised": {
+    "images": 901,
+    "label_rows": 901,
+    "source_csv_files": 5,
+    "splits": {
+      "train": {
+        "images": 300,
+        "label_rows": 300,
+        "unique_image_content": 300
+      },
+      "validation": {
+        "images": 100,
+        "label_rows": 100,
+        "unique_image_content": 100,
+        "source": "official public Validation directory"
+      },
+      "testing": {
+        "images": 501,
+        "label_rows": 501,
+        "unique_image_content": 493
+      }
+    }
+  },
+  "image_properties": {
+    "filename_extension": {
+      ".jpg": 901
+    },
+    "decoded_format": {
+      "JPEG": 713,
+      "PNG": 188
+    },
+    "decoded_mode": {
+      "RGB": 901
+    },
+    "rgb_channels_identical": 901,
+    "size_wh": {
+      "512x512": 901
+    },
+    "decoding_failures": 0,
+    "images_with_exif": 0
+  },
+  "labels": {
+    "canonical_keypoint_order": [
+      "PS1",
+      "PS2",
+      "FH1"
+    ],
+    "coordinate_order": "xy",
+    "coordinate_system": "original image pixel centres",
+    "missing_values": 0,
+    "malformed_points": 0,
+    "out_of_bounds_points": 0,
+    "degenerate_aop_rows": 0,
+    "coordinate_ranges_px": {
+      "PS1": {
+        "x_min": 192.0,
+        "x_max": 368.0,
+        "y_min": 30.0,
+        "y_max": 115.0
+      },
+      "PS2": {
+        "x_min": 59.0,
+        "x_max": 259.0,
+        "y_min": 44.0,
+        "y_max": 158.0
+      },
+      "FH1": {
+        "x_min": 204.0,
+        "x_max": 425.0,
+        "y_min": 80.0,
+        "y_max": 332.0
+      }
+    },
+    "ps1_x_greater_than_ps2_x_rows": 901,
+    "semantic_aliases": {
+      "PS1": "PS_R",
+      "PS2": "PS_L",
+      "FH1": "FH_T"
+    }
+  },
+  "aop": {
+    "definition": "unsigned angle PS2-PS1-FH1",
+    "vertex": "PS1",
+    "unit": "degrees",
+    "maximum_recalculation_difference_deg": 4.9982247674051905e-08,
+    "splits": {
+      "train": {
+        "min_deg": 53.40966992,
+        "max_deg": 136.4249743,
+        "mean_deg": 91.9861971690333
+      },
+      "validation": {
+        "min_deg": 69.572555,
+        "max_deg": 140.3165431,
+        "mean_deg": 94.0085465859
+      },
+      "testing": {
+        "min_deg": 71.4078615,
+        "max_deg": 163.1961093,
+        "mean_deg": 104.53122499516967
+      }
+    }
+  },
+  "integrity": {
+    "manifest_entries": 906,
+    "manifest_expected_files_present": 906,
+    "manifest_size_matches": 906,
+    "manifest_sha256_matches": 906,
+    "zip_crc_marked_verified": 906
+  },
+  "duplicates": {
+    "unique_supervised_image_content": 893,
+    "exact_duplicate_groups": 5,
+    "records_in_exact_duplicate_groups": 13,
+    "excess_duplicate_records": 8,
+    "cross_split_exact_duplicate_groups": 0,
+    "maximum_point_label_disagreement_px": 15.231546211727817,
+    "maximum_aop_label_disagreement_deg": 5.306373109999996
+  },
+  "group_metadata": {
+    "patient_id_present": false,
+    "case_id_present": false,
+    "video_id_present": false,
+    "sequence_id_present": false,
+    "frame_id_present": false,
+    "adjacent_number_cross_split_candidates": 88,
+    "patient_or_sequence_independence_confirmed": false
+  },
+  "unlabeled": {
+    "complete": false,
+    "usable_pool_images": 0,
+    "current_kaggle_v1_archive_expected_unlabeled_images": 31421,
+    "alternative_reported_unlabeled_images": 31121,
+    "unlabeled_count_version_difference_confirmed": false,
+    "official_standard_plane_example_files": 2045,
+    "auxiliary_audit_sample_images": 2,
+    "semi_supervised_training_blocked": true
+  }
+}
