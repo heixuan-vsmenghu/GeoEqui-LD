@@ -107,7 +107,7 @@ def _draw_overlay(
     output_path: Path,
     display_name: str,
     aop_definition: dict[str, Any] | None,
-) -> tuple[int, int, float | None]:
+) -> tuple[int, int, float | None, float, float]:
     try:
         with Image.open(image_path) as source:
             source.load()
@@ -115,6 +115,12 @@ def _draw_overlay(
             image = source.convert("L")
     except (OSError, UnidentifiedImageError) as exc:
         raise RuntimeError(f"Could not decode selected image: {type(exc).__name__}") from exc
+
+    image_array = np.asarray(image, dtype=np.float32)
+    sharpness = float(
+        np.mean(np.diff(image_array, axis=0) ** 2) + np.mean(np.diff(image_array, axis=1) ** 2)
+    )
+    boundary_distance = min(min(x, y, width - 1 - x, height - 1 - y) for x, y in points.values())
 
     figure, axis = plt.subplots(figsize=(7, 7), dpi=150)
     axis.imshow(image, cmap="gray", vmin=0, vmax=255)
@@ -169,7 +175,36 @@ def _draw_overlay(
     figure.tight_layout()
     figure.savefig(output_path, bbox_inches="tight", facecolor="black")
     plt.close(figure)
-    return width, height, angle
+    return width, height, angle, sharpness, float(boundary_distance)
+
+
+def _review_case_report(rows: list[dict[str, object]]) -> str:
+    with_angle = [row for row in rows if isinstance(row["aop_degrees"], float)]
+    median_aop = float(np.median([row["aop_degrees"] for row in with_angle]))
+    categories = {
+        "最好确认候选（高梯度清晰度）": max(rows, key=lambda row: float(row["sharpness_score"])),
+        "模糊候选（低梯度清晰度）": min(rows, key=lambda row: float(row["sharpness_score"])),
+        "边界候选（关键点距边界最近）": min(
+            rows,
+            key=lambda row: float(row["min_boundary_distance_px"]),
+        ),
+        "异常角度候选（偏离本批中位数最大）": max(
+            with_angle,
+            key=lambda row: abs(float(row["aop_degrees"]) - median_aop),
+        ),
+    }
+    lines = [
+        "# Local visualization review candidates",
+        "",
+        "> Restricted medical-data derivatives. Do not commit or upload.",
+        "",
+        "These are deterministic review candidates, not clinical quality labels.",
+        "",
+    ]
+    for category, row in categories.items():
+        lines.append(f"- **{category}**: `{row['output_file']}`")
+    lines.append("")
+    return "\n".join(lines)
 
 
 def run(args: argparse.Namespace) -> int:
@@ -226,7 +261,7 @@ def run(args: argparse.Namespace) -> int:
         points = {name: parse_point(row[name]) for name in SOURCE_KEYPOINTS}
         output_name = f"sample_{output_index:03d}_{file_id}.png"
         display_name = filename if include_filenames else f"file_id={file_id}"
-        width, height, angle = _draw_overlay(
+        width, height, angle, sharpness, boundary_distance = _draw_overlay(
             image_path,
             points,
             output_dir / output_name,
@@ -240,7 +275,9 @@ def run(args: argparse.Namespace) -> int:
                 "filename": filename if include_filenames else "",
                 "width": width,
                 "height": height,
-                "aop_degrees": "" if angle is None else f"{angle:.8f}",
+                "aop_degrees": angle,
+                "sharpness_score": sharpness,
+                "min_boundary_distance_px": boundary_distance,
                 "output_file": output_name,
             }
         )
@@ -250,6 +287,7 @@ def run(args: argparse.Namespace) -> int:
         writer = csv.DictWriter(handle, fieldnames=list(manifest_rows[0]))
         writer.writeheader()
         writer.writerows(manifest_rows)
+    write_text(output_dir / "review_cases.md", _review_case_report(manifest_rows))
     write_text(
         output_dir / "DO_NOT_COMMIT.txt",
         """RESTRICTED LOCAL OUTPUT — DO NOT COMMIT OR UPLOAD

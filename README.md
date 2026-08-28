@@ -38,6 +38,7 @@ DSNT 坐标    [B, 3, 2]，顺序为 [x, y]，范围为 [-1, 1]
 - 一个输入单通道、输出三通道半分辨率热图的小型 U-Net；
 - 坐标、热图、DSNT、AoP、变换、指标、模型和监督训练基础模块共 33 项单元测试通过；
 - 4 张真实训练图上的 tiny-overfit 门槛已经通过。
+- 300/100 监督 baseline 已完成，并在方案冻结后对 testing 评估一次。
 
 这些内容说明基础工程可以继续做监督阶段验证，不代表半监督方法或最终论文实验已经完成。
 
@@ -59,6 +60,15 @@ DSNT 坐标    [B, 3, 2]，顺序为 [x, y]，范围为 [-1, 1]
 - [reports/phase0/duplicate_report.csv](reports/phase0/duplicate_report.csv)
 
 无标签数据和分组元数据的需求见 [reports/phase0/DATA_REQUIRED.md](reports/phase0/DATA_REQUIRED.md)。
+
+## 当前监督结果
+
+| Split | MRE_ALL | AoP MAE |
+|---|---:|---:|
+| Validation best（epoch 15） | 24.779 px | 8.514° |
+| Testing frozen once | 19.930 px | 7.553° |
+
+三点和风险说明见 [BASELINE_REPORT.md](reports/phase0/BASELINE_REPORT.md)，完整阶段总结见 [PHASE0_SUMMARY.md](reports/phase0/PHASE0_SUMMARY.md)。testing 结果没有用于调参；其 501 条记录只对应 493 种唯一图像内容，且患者/视频独立性尚未确认。
 
 ## 数据不会进入公开仓库
 
@@ -89,7 +99,7 @@ python -m pytest -q -p no:cacheprovider
 ## 当前边界
 
 - 尚未完成完整无标签数据审计；
-- tiny-overfit 已通过；正式 baseline 尚未完成；
+- tiny-overfit 和最小监督 baseline 已完成；完整半监督方法尚未开始；
 - 尚未实现 EMA 教师、伪标签或几何一致性损失；
 - 标签中没有患者、病例或视频分组字段，不能证明各 split 在患者级独立；
 - 当前任务是关键点检测和 AoP 定量，不是直接预测分娩结局。

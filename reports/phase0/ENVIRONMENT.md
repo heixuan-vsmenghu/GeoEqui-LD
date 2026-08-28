@@ -9,11 +9,11 @@
 | 项目 | 状态 |
 |---|---|
 | Git 分支 | `feature/phase0-data-baseline` |
-| HEAD | 尚无初始 commit |
+| 训练代码 HEAD | `d421cab667319070a44d5155c6abc0153925d6b3` |
 | 远程仓库 | 尚未绑定 |
-| 审计时工作树 | `src/`、`tests/` 为未跟踪内容 |
+| 监督训练产物 | 本地 Git 忽略目录，未公开 checkpoint/图像 |
 
-这意味着当前实现仍是工作副本。公开前应先确认文件范围、补齐忽略规则，再创建有说明的初始提交。
+代码已经提交；公开前仍需做最终隐私扫描并补充 Phase 0 结果报告。
 
 ## 系统与硬件
 
@@ -70,13 +70,13 @@ python -m pytest -q -p no:cacheprovider
 - 已创建公开的 `configs/phase0_baseline.yaml` 和本地配置示例；
 - PyTorch 的 CPU/CUDA wheel 仍需在目标机器上显式选择；
 - 审计环境与依赖文件均固定使用 PyYAML 6.0.3；
-- tiny-overfit、监督训练和冻结 checkpoint 评估脚本已经存在；tiny-overfit 已有真实运行产物。
+- tiny-overfit、监督训练和冻结 checkpoint 评估脚本均已有真实运行产物；
 
 ## 当前缺项
 
 - 尚无由实际运行保存的配置快照和环境快照；
-- tiny-overfit 已通过；尚无正式 baseline checkpoint；
+- tiny-overfit 与 20 轮正式 baseline 均已完成，本地有 best/last checkpoint；
 - 尚无完整无标签数据；
 - 尚无初始 Git commit。
 
-这些缺项不能用旧项目中的环境、checkpoint 或结果静默代替。
+checkpoint 与图像诊断因数据协议限制留在 Git 忽略目录，不能用“公开仓库里没有权重”误解为训练未执行。

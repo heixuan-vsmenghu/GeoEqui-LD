@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "run_date": "2026-08-28",
+  "git_commit": "d421cab667319070a44d5155c6abc0153925d6b3",
+  "selection": {
+    "split": "validation",
+    "metric": "aop_mae_deg",
+    "best_epoch": 15
+  },
+  "validation": {
+    "samples": 100,
+    "mre_ps1_px": 13.416825294494629,
+    "mre_ps2_px": 20.357471466064453,
+    "mre_fh1_px": 40.56401062011719,
+    "mre_all_px": 24.779436111450195,
+    "aop_mae_deg": 8.513850212097168,
+    "invalid_aop_predictions": 0
+  },
+  "testing_frozen_once": {
+    "samples": 501,
+    "unique_image_content": 493,
+    "mre_ps1_px": 11.077900886535645,
+    "mre_ps2_px": 13.854570388793945,
+    "mre_fh1_px": 34.85845947265625,
+    "mre_all_px": 19.930309295654297,
+    "aop_mae_deg": 7.5534210205078125,
+    "invalid_aop_predictions": 0,
+    "used_for_tuning": false
+  },
+  "public_artifact_policy": {
+    "checkpoint_in_repository": false,
+    "medical_image_visualizations_in_repository": false,
+    "per_sample_predictions_in_repository": false
+  }
+}
