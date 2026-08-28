@@ -46,6 +46,8 @@ PyTorch 检测到 CUDA，GPU 可用。
 
 本机从当前中文项目路径执行 `pip install -e .` 时，wheel 可以成功构建，但 setuptools 生成的 editable `.pth` 含 UTF-8 路径，而该 Python 启动时按 GBK 读取，导致 `UnicodeDecodeError`。本次安装已完整撤回，解释器恢复正常。当前使用 `PYTHONPATH=src` 或脚本自带的 `src` 路径启动；若需要 editable 安装，应将仓库克隆到纯 ASCII 路径后再执行。
 
+非 editable 的 `pip install .` 已在相同中文路径下完成构建、安装、`import geoequi_ld` 和卸载闭环，wheel 包安装不受上述 `.pth` 编码问题影响。
+
 ## 测试命令与结果
 
 使用不写 pytest 缓存的方式执行：
