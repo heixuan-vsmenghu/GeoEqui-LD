@@ -339,7 +339,6 @@ def _validate_metric_payload(
         "coordinate_smooth_l1",
         "distribution_js",
         *METRIC_NAMES,
-        "aop_mae_valid_deg",
     ):
         _finite(value[name], context=f"{context}.{name}", nonnegative=True)
     _require_equal(value["decoder"], "dsnt", context=f"{context}.decoder")
@@ -354,9 +353,31 @@ def _validate_metric_payload(
         value["n_evaluable_aop"],
         context=f"{context} AoP counts",
     )
+    valid_only_value = value["aop_mae_valid_deg"]
+    if valid_only_value is None:
+        valid_only_mean: float | None = None
+    else:
+        try:
+            converted_valid_only = float(valid_only_value)
+        except (TypeError, ValueError) as error:
+            raise ValueError(f"{context}.aop_mae_valid_deg must be numeric or null") from error
+        valid_only_mean = None if math.isnan(converted_valid_only) else converted_valid_only
+    if valid_only_mean is None:
+        if value["n_valid_aop"] != 0:
+            raise ValueError(
+                f"{context}.aop_mae_valid_deg may be undefined only when n_valid_aop is zero"
+            )
+    else:
+        _finite(
+            valid_only_mean,
+            context=f"{context}.aop_mae_valid_deg",
+            nonnegative=True,
+        )
     expected_mre = sum(float(value[name]) for name in METRIC_NAMES[:3]) / 3.0
     _require_mre_identity(value["MRE_ALL"], expected_mre, context=f"{context}.MRE_ALL")
-    return value
+    validated = dict(value)
+    validated["aop_mae_valid_deg"] = valid_only_mean
+    return validated
 
 
 def _csv_int(value: Any, *, context: str) -> int:
@@ -392,9 +413,7 @@ def _history_metrics(
         "aop_invalid_prediction_count": _csv_int(
             row["val_aop_invalid_prediction_count"], context=f"{context}.n_invalid"
         ),
-        "aop_mae_valid_deg": _finite(
-            row["val_aop_mae_valid_deg"], context=f"{context}.aop_valid", nonnegative=True
-        ),
+        "aop_mae_valid_deg": row["val_aop_mae_valid_deg"],
     }
     return _validate_metric_payload(payload, expected_samples=expected_samples, context=context)
 
@@ -446,6 +465,8 @@ def _compare_payload(
 ) -> None:
     for name in METRIC_PAYLOAD_FIELDS:
         if name == "decoder" or name in COUNT_NAMES:
+            _require_equal(actual[name], expected[name], context=f"{context}.{name}")
+        elif name == "aop_mae_valid_deg" and (actual[name] is None or expected[name] is None):
             _require_equal(actual[name], expected[name], context=f"{context}.{name}")
         else:
             _close(actual[name], expected[name], context=f"{context}.{name}")
@@ -910,21 +931,28 @@ def _earliest_matching_epoch(
 def _effect_diagnostic(candidate: ValidatedRun, reference: ValidatedRun) -> dict[str, Any]:
     candidate_best = _best_row(candidate)
     reference_best = _best_row(reference)
+    candidate_endpoint = candidate.history[-1]
+    reference_endpoint = reference.history[-1]
     relation = _primary_relation(candidate_best, reference_best)
+    endpoint_relation = _primary_relation(candidate_endpoint, reference_endpoint)
     reductions = {
         name: _relative_reduction(float(reference_best[name]), float(candidate_best[name]))
         for name in ("aop_mae_deg", "MRE_ALL")
     }
-    final_benefit = relation == "better_or_equal_on_both" and any(
+    selected_best_benefit = relation == "better_or_equal_on_both" and any(
         value is not None and value >= 0.05 for value in reductions.values()
     )
+    sustained_endpoint_benefit = selected_best_benefit and endpoint_relation in {
+        "better_or_equal_on_both",
+        "equal_on_both",
+    }
     earliest = _earliest_matching_epoch(candidate, reference_best)
     speed_benefit = earliest is not None and earliest < int(reference_best["epoch"])
-    if final_benefit:
+    if sustained_endpoint_benefit:
         classification = "mainly_final_performance"
     elif speed_benefit:
         classification = "mainly_convergence_speed"
-    elif relation == "mixed":
+    elif selected_best_benefit or relation == "mixed":
         classification = "mixed_evidence"
     else:
         classification = "no_clear_advantage"
@@ -936,14 +964,22 @@ def _effect_diagnostic(candidate: ValidatedRun, reference: ValidatedRun) -> dict
             name: float(candidate_best[name]) - float(reference_best[name])
             for name in ("aop_mae_deg", "MRE_ALL")
         },
+        "epoch200_relation": endpoint_relation,
+        "epoch200_metric_delta_candidate_minus_reference": {
+            name: float(candidate_endpoint[name]) - float(reference_endpoint[name])
+            for name in ("aop_mae_deg", "MRE_ALL")
+        },
         "relative_reduction_at_best": reductions,
         "candidate_best_epoch": int(candidate_best["epoch"]),
         "reference_best_epoch": int(reference_best["epoch"]),
         "earliest_epoch_matching_reference_best_on_both_primary_metrics": earliest,
+        "selected_best_benefit": selected_best_benefit,
+        "sustained_endpoint_benefit": sustained_endpoint_benefit,
         "classification": classification,
         "descriptive_rule": (
-            "final: best dominates both primary metrics and improves at least one by 5%; "
-            "speed: reaches both reference-best thresholds before the reference best epoch"
+            "final: selected best dominates both primary metrics, improves at least one by 5%, "
+            "and the epoch-200 endpoint is no worse on both; speed: reaches both reference-best "
+            "thresholds before the reference best epoch without satisfying that sustained rule"
         ),
     }
 
@@ -1022,11 +1058,32 @@ def _b0_target_conclusion(target: str, comparison: Mapping[str, Any]) -> str:
 def _effect_answer(name: str, diagnostic: Mapping[str, Any]) -> str:
     classification = diagnostic["classification"]
     earliest = diagnostic["earliest_epoch_matching_reference_best_on_both_primary_metrics"]
+    reference_best_epoch = diagnostic.get("reference_best_epoch")
+    best_relation = diagnostic.get("best_relation")
+    endpoint_relation = diagnostic.get("epoch200_relation")
     if classification == "mainly_final_performance":
-        extra = f"；并且第 {earliest} 轮已同时达到参照方案的最佳双指标" if earliest else ""
-        return f"{name}在这次单种子检查里更像是改变最终性能{extra}。"
+        extra = (
+            f"；同时第 {earliest} 轮已达到参照方案在第 {reference_best_epoch} 轮取得的"
+            "最佳双指标"
+            if earliest and reference_best_epoch
+            else ""
+        )
+        return f"{name}主要改变最终性能，同时也加快了收敛{extra}。"
     if classification == "mainly_convergence_speed":
-        return f"{name}主要表现为加快收敛：第 {earliest} 轮已达到参照方案的最佳双指标。"
+        answer = (
+            f"{name}主要表现为加快收敛：第 {earliest} 轮已达到参照方案在第 "
+            f"{reference_best_epoch} 轮取得的最佳双指标"
+        )
+        if best_relation == "better_or_equal_on_both" and endpoint_relation == (
+            "worse_or_equal_on_both"
+        ):
+            answer += (
+                "；validation-selected best也更优，但epoch 200端点的两项主指标均更差，"
+                "因此不能概括为持续改善最终性能或长期稳定性"
+            )
+        elif endpoint_relation == "mixed":
+            answer += "；epoch 200端点的两项主指标方向不一致，不能认定最终性能持续改善"
+        return answer + "。"
     if classification == "mixed_evidence":
         return f"{name}在两项主指标上的方向不一致，当前不能归为只改变最终性能或只加速收敛。"
     return f"{name}没有显示出足以归为最终性能改善或收敛加速的清楚优势。"
@@ -1041,6 +1098,7 @@ def _build_conclusions(
 ) -> list[dict[str, str | int]]:
     b0_phrases = [_b0_target_conclusion(target, catch[target]) for target in ("B1", "B2")]
     b0_best = _best_row(runs["B0"])
+    b0_validity = _aop_validity_diagnostics(runs["B0"])
     return [
         {
             "number": 1,
@@ -1063,10 +1121,13 @@ def _build_conclusions(
             "number": 4,
             "question": "按老师原文采用纯MSE是否仍然具备可行性？",
             "answer": (
-                f"仅在工程/复现层面的监督基线意义上具备可行性。B0完整跑完200轮并"
-                f"得到有限的validation指标，其best在第 {int(b0_best['epoch'])} 轮；"
-                "这说明方案可训练、可复现，但不代表达到任何临床或实用性能阈值，"
-                "也不等于它在当前指标上优于增强版本。"
+                f"仅在工程/复现层面的监督基线意义上具备可行性。B0完整跑完200轮，"
+                f"五项主validation指标按既定惩罚规则保持有限，其best在第 "
+                f"{int(b0_best['epoch'])} 轮；但第 "
+                f"{b0_validity['first_full_collapse_epoch']}–"
+                f"{b0_validity['last_full_collapse_epoch']} 轮连续出现0个有效AoP预测。"
+                "因此它可训练、可复现，却不具备当前实验中的竞争性和长期稳定性，"
+                "不能据此声称达到临床、实用或可靠最终方案的性能阈值。"
             ),
         },
         {
@@ -1078,6 +1139,42 @@ def _build_conclusions(
             ),
         },
     ]
+
+
+def _aop_validity_diagnostics(run: ValidatedRun) -> dict[str, Any]:
+    any_invalid_epochs: list[int] = []
+    zero_valid_epochs: list[int] = []
+    full_collapse_epochs: list[int] = []
+    for row in run.history:
+        payload = row["_payload"]
+        epoch = int(row["epoch"])
+        if int(payload["aop_invalid_prediction_count"]) > 0:
+            any_invalid_epochs.append(epoch)
+        if int(payload["n_valid_aop"]) == 0:
+            zero_valid_epochs.append(epoch)
+        if int(payload["n_evaluable_aop"]) > 0 and int(
+            payload["aop_invalid_prediction_count"]
+        ) == int(payload["n_evaluable_aop"]):
+            full_collapse_epochs.append(epoch)
+    late_full_collapse_epochs = [epoch for epoch in full_collapse_epochs if epoch > 20]
+    return {
+        "any_invalid_prediction_epoch_count": len(any_invalid_epochs),
+        "any_invalid_prediction_epochs": any_invalid_epochs,
+        "first_any_invalid_prediction_epoch": (
+            any_invalid_epochs[0] if any_invalid_epochs else None
+        ),
+        "last_any_invalid_prediction_epoch": (
+            any_invalid_epochs[-1] if any_invalid_epochs else None
+        ),
+        "zero_valid_epoch_count": len(zero_valid_epochs),
+        "zero_valid_epochs": zero_valid_epochs,
+        "full_collapse_epoch_count": len(full_collapse_epochs),
+        "full_collapse_epochs": full_collapse_epochs,
+        "first_full_collapse_epoch": (full_collapse_epochs[0] if full_collapse_epochs else None),
+        "last_full_collapse_epoch": (full_collapse_epochs[-1] if full_collapse_epochs else None),
+        "full_collapse_after_epoch20_count": len(late_full_collapse_epochs),
+        "full_collapse_after_epoch20_epochs": late_full_collapse_epochs,
+    }
 
 
 def _build_aggregate(
@@ -1101,6 +1198,7 @@ def _build_aggregate(
                 "seed": SEED,
                 "best_epoch": int(best["epoch"]),
                 "checkpoints": checkpoints,
+                "aop_validity_diagnostics": _aop_validity_diagnostics(run),
             }
         )
     catch = _catch_comparison(runs)
@@ -1157,6 +1255,7 @@ def _build_aggregate(
             "all_epoch_training_orders_match": True,
             "all_best_checkpoints_verified": True,
             "all_best_tuples_recomputed": True,
+            "all_aop_validity_epochs_audited": True,
         },
         "limitations": [
             "validation-only; testing was not read or evaluated",
@@ -1213,6 +1312,47 @@ def _best_table(aggregate: Mapping[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _aop_validity_table(aggregate: Mapping[str, Any]) -> str:
+    lines = [
+        "| 方案 | 出现任一无效预测的轮数 | 首次出现 | zero-valid轮数 | "
+        "full-collapse轮数 | 首次full-collapse | epoch 20后full-collapse |",
+        "|---|---:|---:|---:|---:|---:|---:|",
+    ]
+    for run in aggregate["runs"]:
+        diagnostics = run["aop_validity_diagnostics"]
+        first_invalid = diagnostics["first_any_invalid_prediction_epoch"]
+        first = diagnostics["first_full_collapse_epoch"]
+        lines.append(
+            "| {variant} | {invalid} | {first_invalid} | {zero} | {collapse} | "
+            "{first} | {late} |".format(
+                variant=run["variant"],
+                invalid=diagnostics["any_invalid_prediction_epoch_count"],
+                first_invalid="—" if first_invalid is None else first_invalid,
+                zero=diagnostics["zero_valid_epoch_count"],
+                collapse=diagnostics["full_collapse_epoch_count"],
+                first="—" if first is None else first,
+                late=diagnostics["full_collapse_after_epoch20_count"],
+            )
+        )
+    return "\n".join(lines)
+
+
+def _b0_late_collapse_note(aggregate: Mapping[str, Any]) -> str:
+    b0 = next(run for run in aggregate["runs"] if run["variant"] == "B0")
+    diagnostics = b0["aop_validity_diagnostics"]
+    any_invalid_epochs = diagnostics["any_invalid_prediction_epochs"]
+    epochs = diagnostics["full_collapse_after_epoch20_epochs"]
+    if not epochs:
+        return "B0 在 epoch 20 后没有出现 AoP full-collapse。"
+    return (
+        f"B0 首次出现无效AoP预测是在 epoch {any_invalid_epochs[0]}，全程共有 "
+        f"{len(any_invalid_epochs)} 轮至少出现1个无效预测；其中 epoch {epochs[0]}–"
+        f"{epochs[-1]} 连续 {len(epochs)} 轮为AoP full-collapse。"
+        "这些轮次的有效 AoP 预测数为 0，主 AoP MAE 仍保留有限惩罚值；"
+        "这揭示了只看惩罚后均值会掩盖的后期解码崩溃。"
+    )
+
+
 def _milestone_table(run: Mapping[str, Any]) -> str:
     lines = [
         "| 位置 | epoch | PS1 MRE | PS2 MRE | FH1 MRE | MRE_ALL | AoP MAE |",
@@ -1263,6 +1403,15 @@ MRE_ALL、较早 epoch 依次选择；testing 没有读取或评估。
 
 MRE 单位是原图像素，AoP MAE 单位是度，均为越低越好。三种方案的 total loss
 定义不同，因此本报告不横向比较 total loss。
+
+## AoP 有效性诊断
+
+{_aop_validity_table(aggregate)}
+
+full-collapse 指该轮所有可评估样本的预测 AoP 都无效；此时 valid-only AoP MAE
+没有定义，但用于 checkpoint 的主 AoP MAE 仍是有限惩罚值。
+
+{_b0_late_collapse_note(aggregate)}
 
 ## B0 在 20 轮以后
 
@@ -1317,6 +1466,16 @@ def _render_detailed(aggregate: Mapping[str, Any]) -> str:
 
 {run_sections}
 
+## AoP 有效性诊断
+
+{_aop_validity_table(aggregate)}
+
+zero-valid 表示该轮没有一个有效的预测 AoP；full-collapse 进一步要求所有可评估样本
+都产生无效预测。full-collapse 时 valid-only AoP MAE 合法地没有定义，主 AoP MAE
+仍按有限惩罚值记录并参与 checkpoint 选择。
+
+{_b0_late_collapse_note(aggregate)}
+
 ## B0 的 20 轮后变化
 
 - epoch 20：MRE_ALL={_format(post20["epoch20"]["metrics"]["MRE_ALL"])} px，
@@ -1356,6 +1515,8 @@ total loss。
 
 - 三个运行均恰好 200 轮，epoch 连续为 1–200，五项 validation 指标逐轮有限。
 - MRE_ALL 已按三个关键点 MRE 的算术均值逐轮复算。
+- 每轮 AoP 有效数、无效预测数和 full-collapse 状态均已复核；valid-only 均值仅在
+  有有效预测时要求为有限数值。
 - best 已按 AoP MAE、MRE_ALL、较早 epoch 的三元组从 CSV 重算，并与
   result、metrics 和 checkpoint 记录交叉核对。
 - 三个运行的数据身份、模型初始化、代码版本、协议、环境以及 200 轮训练顺序一致；

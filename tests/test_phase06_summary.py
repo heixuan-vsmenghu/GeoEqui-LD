@@ -17,6 +17,8 @@ from scripts.summarize_phase06 import (
     ValidatedRun,
     _build_conclusions,
     _catch_comparison,
+    _effect_answer,
+    _effect_diagnostic,
     _format_epoch,
     summarize_phase06,
 )
@@ -331,15 +333,132 @@ def test_summary_accepts_realistic_nonidentical_mre_rounding(
     assert aggregate["integrity"]["all_best_tuples_recomputed"]
 
 
+def test_summary_accepts_zero_valid_aop_with_finite_penalty_and_reports_collapse(
+    phase06_matrix: tuple[Path, Path, Path],
+) -> None:
+    protocol_path, run_root, report_root = phase06_matrix
+    run_dir = run_root / "B0" / "seed_42"
+    history_path = run_dir / "train_log.csv"
+    rows = _read_csv(history_path)
+    final_row = rows[-1]
+    final_row["val_n_valid_aop"] = "0"
+    final_row["val_aop_invalid_prediction_count"] = "100"
+    final_row["val_aop_mae_valid_deg"] = "nan"
+    final_row["val_aop_mae_deg"] = "180.0"
+    _rewrite_csv(history_path, rows)
+
+    def mark_payload(payload: dict[str, Any]) -> None:
+        payload["n_valid_aop"] = 0
+        payload["aop_invalid_prediction_count"] = 100
+        payload["aop_mae_valid_deg"] = None
+        payload["aop_mae_deg"] = 180.0
+
+    result_path = run_dir / "phase06_result.json"
+    result = json.loads(result_path.read_text(encoding="utf-8"))
+    mark_payload(result["last_validation_metrics"])
+    result["milestone_validation_metrics"]["200"]["aop_mae_deg"] = 180.0
+    _write_json(result_path, result)
+    metrics_path = run_dir / "metrics.json"
+    metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+    mark_payload(metrics["last_validation_metrics"])
+    _write_json(metrics_path, metrics)
+
+    aggregate = summarize_phase06(
+        protocol_path=protocol_path,
+        run_root=run_root,
+        report_root=report_root,
+    )
+    b0 = next(run for run in aggregate["runs"] if run["variant"] == "B0")
+    diagnostics = b0["aop_validity_diagnostics"]
+    assert diagnostics["any_invalid_prediction_epochs"] == [200]
+    assert diagnostics["first_any_invalid_prediction_epoch"] == 200
+    assert diagnostics["zero_valid_epochs"] == [200]
+    assert diagnostics["full_collapse_epochs"] == [200]
+    assert diagnostics["full_collapse_after_epoch20_count"] == 1
+    summary = (report_root / "PHASE06_SUMMARY.md").read_text(encoding="utf-8")
+    assert "连续 1 轮为AoP full-collapse" in summary
+    assert "后期解码崩溃" in summary
+
+
+def test_effect_classifies_early_best_without_sustained_endpoint_as_speed() -> None:
+    def run(variant: str, history: tuple[dict[str, float | int], ...]) -> ValidatedRun:
+        return ValidatedRun(
+            variant=variant,
+            config={},
+            result={},
+            history=history,
+            environment={},
+            order_records=(),
+        )
+
+    reference = run(
+        "B1",
+        (
+            {"epoch": 1, "aop_mae_deg": 20.0, "MRE_ALL": 20.0},
+            {"epoch": 194, "aop_mae_deg": 10.0, "MRE_ALL": 10.0},
+            {"epoch": 200, "aop_mae_deg": 11.0, "MRE_ALL": 11.0},
+        ),
+    )
+    candidate = run(
+        "B2",
+        (
+            {"epoch": 1, "aop_mae_deg": 12.0, "MRE_ALL": 12.0},
+            {"epoch": 15, "aop_mae_deg": 9.7, "MRE_ALL": 9.0},
+            {"epoch": 200, "aop_mae_deg": 13.0, "MRE_ALL": 13.0},
+        ),
+    )
+
+    diagnostic = _effect_diagnostic(candidate, reference)
+
+    assert diagnostic["classification"] == "mainly_convergence_speed"
+    assert diagnostic["selected_best_benefit"]
+    assert not diagnostic["sustained_endpoint_benefit"]
+    assert diagnostic["epoch200_relation"] == "worse_or_equal_on_both"
+    answer = _effect_answer("JS项（B2相对B1）", diagnostic)
+    assert "主要表现为加快收敛" in answer
+    assert "validation-selected best也更优" in answer
+    assert "epoch 200端点的两项主指标均更差" in answer
+
+
+def test_summary_rejects_undefined_valid_only_aop_when_valid_predictions_exist(
+    phase06_matrix: tuple[Path, Path, Path],
+) -> None:
+    protocol_path, run_root, report_root = phase06_matrix
+    path = run_root / "B1" / "seed_42" / "phase06_result.json"
+    result = json.loads(path.read_text(encoding="utf-8"))
+    assert result["best_validation_metrics"]["dsnt"]["n_valid_aop"] > 0
+    result["best_validation_metrics"]["dsnt"]["aop_mae_valid_deg"] = None
+    _write_json(path, result)
+
+    with pytest.raises(ValueError, match="undefined only when n_valid_aop is zero"):
+        summarize_phase06(
+            protocol_path=protocol_path,
+            run_root=run_root,
+            report_root=report_root,
+        )
+
+
 def test_first_conclusion_distinguishes_best_from_reversed_epoch200_endpoint() -> None:
+    def row(epoch: int, values: tuple[float, float]) -> dict[str, Any]:
+        return {
+            "epoch": epoch,
+            "aop_mae_deg": values[0],
+            "MRE_ALL": values[1],
+            "_payload": {
+                "n_valid_aop": 100,
+                "n_evaluable_aop": 100,
+                "aop_invalid_prediction_count": 0,
+            },
+        }
+
     def run(variant: str, best: tuple[float, float], endpoint: tuple[float, float]) -> ValidatedRun:
         return ValidatedRun(
             variant=variant,
             config={},
             result={},
             history=(
-                {"epoch": 50, "aop_mae_deg": best[0], "MRE_ALL": best[1]},
-                {"epoch": 200, "aop_mae_deg": endpoint[0], "MRE_ALL": endpoint[1]},
+                row(50, best),
+                row(200, endpoint),
             ),
             environment={},
             order_records=(),
