@@ -19,6 +19,7 @@ from geoequi_ld.training.phase1b_runners import (
     _evaluate_key_checkpoints,
     _expected_h1_static_contract,
     _finish_ledger,
+    _formal_runtime_allocation_outcome,
     _ledger_run_binding,
     _phase1b_ledger,
     _save_model_only,
@@ -580,6 +581,78 @@ def test_phase1b_ledger_closes_as_budget_exhausted_when_elapsed_exceeds_allocati
     snapshot = ledger.snapshot()
     assert snapshot["active_run"] is None
     assert snapshot["runs"][-1]["status"] == "budget_exhausted"
+
+
+def test_formal_runtime_allocation_distinguishes_training_subbudget_stop() -> None:
+    binding = {
+        "entry": {
+            "status": "budget_exhausted",
+            "elapsed_seconds": 6631.0,
+            "allocated_seconds": 7200.0,
+            "details": {
+                "allocation_exceeded": False,
+                "aggregate_limit_exceeded": False,
+            },
+        }
+    }
+
+    outcome = _formal_runtime_allocation_outcome(
+        elapsed_seconds=6631.0,
+        allocated_seconds=7200.0,
+        ledger_binding=binding,
+    )
+
+    assert outcome == {
+        "formal_allocation_exceeded": False,
+        "aggregate_gpu_cap_exceeded": False,
+        "within_runtime_allocation": True,
+    }
+
+
+@pytest.mark.parametrize(
+    ("details", "elapsed", "expected_formal", "expected_aggregate"),
+    [
+        (
+            {"allocation_exceeded": True, "aggregate_limit_exceeded": False},
+            6631.0,
+            True,
+            False,
+        ),
+        (
+            {"allocation_exceeded": False, "aggregate_limit_exceeded": True},
+            6631.0,
+            False,
+            True,
+        ),
+        (
+            {"allocation_exceeded": False, "aggregate_limit_exceeded": False},
+            7200.1,
+            True,
+            False,
+        ),
+    ],
+)
+def test_formal_runtime_allocation_fails_on_actual_or_ledger_exceed_flags(
+    details: dict[str, bool],
+    elapsed: float,
+    expected_formal: bool,
+    expected_aggregate: bool,
+) -> None:
+    outcome = _formal_runtime_allocation_outcome(
+        elapsed_seconds=elapsed,
+        allocated_seconds=7200.0,
+        ledger_binding={
+            "entry": {
+                "status": "budget_exhausted",
+                "elapsed_seconds": min(elapsed, 7200.0),
+                "allocated_seconds": 7200.0,
+                "details": details,
+            }
+        },
+    )
+    assert outcome["formal_allocation_exceeded"] is expected_formal
+    assert outcome["aggregate_gpu_cap_exceeded"] is expected_aggregate
+    assert not outcome["within_runtime_allocation"]
 
 
 def test_full_checkpoint_resume_state_captures_all_rng_streams() -> None:

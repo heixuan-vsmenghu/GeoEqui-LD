@@ -317,6 +317,42 @@ def _ledger_run_binding(
     }
 
 
+def _formal_runtime_allocation_outcome(
+    *,
+    elapsed_seconds: float,
+    allocated_seconds: float,
+    ledger_binding: Mapping[str, Any],
+) -> dict[str, bool]:
+    """Separate a training sub-budget stop from a formal allocation overrun."""
+
+    entry = ledger_binding.get("entry")
+    if not isinstance(entry, Mapping):
+        raise ValueError("Phase 1B formal ledger binding has no entry")
+    details = entry.get("details")
+    if not isinstance(details, Mapping):
+        raise ValueError("Phase 1B formal ledger entry has no details")
+    allocation_flag = details.get("allocation_exceeded")
+    aggregate_flag = details.get("aggregate_limit_exceeded")
+    if not isinstance(allocation_flag, bool) or not isinstance(aggregate_flag, bool):
+        raise ValueError("Phase 1B formal ledger exceed flags must be boolean")
+
+    ledger_elapsed = float(entry["elapsed_seconds"])
+    ledger_allocation = float(entry["allocated_seconds"])
+    formal_allocation_exceeded = (
+        float(elapsed_seconds) > float(allocated_seconds)
+        or ledger_elapsed > ledger_allocation
+        or allocation_flag
+    )
+    aggregate_gpu_cap_exceeded = aggregate_flag
+    return {
+        "formal_allocation_exceeded": formal_allocation_exceeded,
+        "aggregate_gpu_cap_exceeded": aggregate_gpu_cap_exceeded,
+        "within_runtime_allocation": not (
+            formal_allocation_exceeded or aggregate_gpu_cap_exceeded
+        ),
+    }
+
+
 def _require_ledger_binding_current(
     binding: Mapping[str, Any],
     *,
@@ -1814,18 +1850,22 @@ def run_phase1b_split_formal(
         )
         write_json(output / "key_checkpoint_metrics.json", key_metrics)
         total_elapsed = time.perf_counter() - started
+        training_subbudget_exhausted = summary["status"] != "completed"
         result = {
             "schema_version": 1,
             "experiment_name": protocol.experiment_name,
             "status": summary["status"],
             "epochs_completed": summary["epochs_completed"],
             "epochs_requested": 20,
-            "partial": summary["status"] != "completed",
+            "partial": training_subbudget_exhausted,
+            "training_subbudget_exhausted": training_subbudget_exhausted,
             "selection_split": "validation",
             "selection_order": ["aop_mae_deg", "MRE_ALL", "earlier_epoch"],
             "runtime_elapsed_sec": total_elapsed,
             "runtime_allocated_sec": allocation,
             "within_runtime_allocation": total_elapsed <= allocation,
+            "formal_allocation_exceeded": total_elapsed > allocation,
+            "aggregate_gpu_cap_exceeded": False,
             "best_epoch": summary["best_epoch"],
             "best_validation_metrics": summary["best_validation_metrics"],
             "last_validation_metrics": summary["last_validation_metrics"],
@@ -1850,10 +1890,19 @@ def run_phase1b_split_formal(
             ledger_snapshot,
             protocol.experiment_name,
         )
+        result.update(
+            _formal_runtime_allocation_outcome(
+                elapsed_seconds=total_elapsed,
+                allocated_seconds=allocation,
+                ledger_binding=result["gpu_ledger_binding"],
+            )
+        )
         if result["gpu_ledger_binding"]["entry"]["status"] != "completed":
             result["status"] = "budget_exhausted"
             result["partial"] = True
-            result["within_runtime_allocation"] = False
+        if not result["within_runtime_allocation"]:
+            result["status"] = "budget_exhausted"
+            result["partial"] = True
         write_json(output / "formal_result.json", result)
         return result
     except torch.cuda.OutOfMemoryError:
