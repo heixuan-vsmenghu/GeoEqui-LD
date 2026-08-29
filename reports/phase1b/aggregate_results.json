@@ -1,0 +1,307 @@
+{
+  "schema_version": 1,
+  "phase": "phase1b-supervised-decoder-control",
+  "scope": "BatchNorm diagnostic and shared-versus-independent decoder control",
+  "data_scope": {
+    "train_samples": 300,
+    "validation_samples": 100,
+    "testing_frozen": true
+  },
+  "protocol": {
+    "seed": 42,
+    "loss": "B2: heatmap MSE + coordinate SmoothL1 + distribution JS",
+    "batch_size": 1,
+    "optimizer": "Adam",
+    "learning_rate": 0.001,
+    "selection_order": [
+      "aop_mae_deg",
+      "MRE_ALL",
+      "earlier_epoch"
+    ],
+    "shared_model": "HRNetW32SharedHeatmap",
+    "split_model": "HRNetW32SplitHeatmap (PS 2-channel head + FH 1-channel head)"
+  },
+  "integrity": {
+    "h1_epoch1_replay": "PASS",
+    "h1_comparison_classification": "frozen_shared_comparator",
+    "split_initial_output_equivalent_to_shared": true,
+    "split_initial_max_absolute_output_difference": 0.0,
+    "best_and_last_recomputed_validation_match": true,
+    "evaluation_state_unchanged": true,
+    "public_outputs_sanitized": true
+  },
+  "bn_diagnostic": {
+    "method": "Reset BN running statistics and make one cumulative train-image-only pass",
+    "used_for_model_selection": false,
+    "parameters_unchanged": true,
+    "only_bn_running_statistics_changed": true,
+    "endpoints": {
+      "best": {
+        "epoch": 3,
+        "original_bn_train": {
+          "MRE_PS1": 14.512332,
+          "MRE_PS2": 18.821804,
+          "MRE_FH1": 38.709911,
+          "MRE_ALL": 24.014683,
+          "aop_mae_deg": 9.828517,
+          "n_valid_aop": 300,
+          "n_evaluable_aop": 300
+        },
+        "original_bn_validation": {
+          "MRE_PS1": 22.482798,
+          "MRE_PS2": 27.854063,
+          "MRE_FH1": 46.837406,
+          "MRE_ALL": 32.391418,
+          "aop_mae_deg": 12.129548,
+          "n_valid_aop": 100,
+          "n_evaluable_aop": 100
+        },
+        "original_bn_validation_minus_train": {
+          "MRE_PS1": 7.970466,
+          "MRE_PS2": 9.032259,
+          "MRE_FH1": 8.127495,
+          "MRE_ALL": 8.376735,
+          "aop_mae_deg": 2.301031
+        },
+        "train_images_bn_reestimated": {
+          "MRE_PS1": 35.331898,
+          "MRE_PS2": 43.66758,
+          "MRE_FH1": 42.34473,
+          "MRE_ALL": 40.448067,
+          "aop_mae_deg": 16.142014,
+          "n_valid_aop": 100,
+          "n_evaluable_aop": 100
+        },
+        "delta_reestimated_minus_original": {
+          "MRE_PS1": 12.8491,
+          "MRE_PS2": 15.813517,
+          "MRE_FH1": -4.492676,
+          "MRE_ALL": 8.056649,
+          "aop_mae_deg": 4.012466
+        }
+      },
+      "last": {
+        "epoch": 20,
+        "original_bn_train": {
+          "MRE_PS1": 13.366778,
+          "MRE_PS2": 30.054705,
+          "MRE_FH1": 27.451067,
+          "MRE_ALL": 23.624184,
+          "aop_mae_deg": 15.298715,
+          "n_valid_aop": 300,
+          "n_evaluable_aop": 300
+        },
+        "original_bn_validation": {
+          "MRE_PS1": 20.148333,
+          "MRE_PS2": 54.646008,
+          "MRE_FH1": 44.131351,
+          "MRE_ALL": 39.641903,
+          "aop_mae_deg": 23.109398,
+          "n_valid_aop": 100,
+          "n_evaluable_aop": 100
+        },
+        "original_bn_validation_minus_train": {
+          "MRE_PS1": 6.781555,
+          "MRE_PS2": 24.591303,
+          "MRE_FH1": 16.680284,
+          "MRE_ALL": 16.017719,
+          "aop_mae_deg": 7.810683
+        },
+        "train_images_bn_reestimated": {
+          "MRE_PS1": 17.308563,
+          "MRE_PS2": 32.553123,
+          "MRE_FH1": 39.96941,
+          "MRE_ALL": 29.943701,
+          "aop_mae_deg": 14.819779,
+          "n_valid_aop": 100,
+          "n_evaluable_aop": 100
+        },
+        "delta_reestimated_minus_original": {
+          "MRE_PS1": -2.83977,
+          "MRE_PS2": -22.092885,
+          "MRE_FH1": -4.161941,
+          "MRE_ALL": -9.698202,
+          "aop_mae_deg": -8.289619
+        }
+      }
+    },
+    "interpretation": "Re-estimation helped the epoch-20 endpoint but hurt the selected epoch-3 checkpoint overall; this supports BN-statistics sensitivity as a risk, not a sole cause."
+  },
+  "decoder_control": {
+    "parameter_counts": {
+      "h1_shared": 29318355,
+      "h2_split": 29332275,
+      "h2_minus_h1": 13920
+    },
+    "tiny_gate": {
+      "steps": 500,
+      "programmatic_gate": "PASS",
+      "manual_visual_review": "PASS",
+      "MRE_ALL": 4.740189,
+      "aop_mae_deg": 2.571505,
+      "n_valid_aop": 4
+    },
+    "h1_shared": {
+      "status": "completed",
+      "epochs_completed": 20,
+      "best": {
+        "epoch": 3,
+        "MRE_PS1": 22.482796,
+        "MRE_PS2": 27.854063,
+        "MRE_FH1": 46.837406,
+        "MRE_ALL": 32.391418,
+        "aop_mae_deg": 12.129548,
+        "n_valid_aop": 100,
+        "n_evaluable_aop": 100
+      },
+      "last": {
+        "epoch": 20,
+        "MRE_PS1": 20.148331,
+        "MRE_PS2": 54.646008,
+        "MRE_FH1": 44.131351,
+        "MRE_ALL": 39.641903,
+        "aop_mae_deg": 23.109398,
+        "n_valid_aop": 100,
+        "n_evaluable_aop": 100
+      }
+    },
+    "h2_split": {
+      "status": "budget_exhausted",
+      "training_subbudget_exhausted": true,
+      "formal_allocation_exceeded": false,
+      "aggregate_gpu_cap_exceeded": false,
+      "partial": true,
+      "epochs_completed": 16,
+      "epochs_requested": 20,
+      "formal_elapsed_seconds": 6631.836,
+      "formal_allocation_seconds": 7200.0,
+      "post_evaluation_reserve_seconds": 600.0,
+      "training_guard_seconds": 6600.0,
+      "ledger_closing_reserve_seconds": 120.0,
+      "actual_formal_elapsed_below_allocation": true,
+      "stop_explanation": "The 6600 s training guard stopped before epoch 17 so that post-training evaluation could use its 600 s reserve inside the 7200 s formal allocation.",
+      "best": {
+        "epoch": 3,
+        "MRE_PS1": 17.564425,
+        "MRE_PS2": 24.193027,
+        "MRE_FH1": 51.797447,
+        "MRE_ALL": 31.184967,
+        "aop_mae_deg": 13.563064,
+        "n_valid_aop": 100,
+        "n_evaluable_aop": 100
+      },
+      "best_train": {
+        "MRE_PS1": 13.443938,
+        "MRE_PS2": 15.123833,
+        "MRE_FH1": 36.349663,
+        "MRE_ALL": 21.639143,
+        "aop_mae_deg": 9.69658,
+        "n_valid_aop": 300,
+        "n_evaluable_aop": 300
+      },
+      "best_validation_minus_train": {
+        "MRE_PS1": 4.120486,
+        "MRE_PS2": 9.069195,
+        "MRE_FH1": 15.447784,
+        "MRE_ALL": 9.545824,
+        "aop_mae_deg": 3.866484
+      },
+      "last_observed": {
+        "epoch": 16,
+        "MRE_PS1": 17.407007,
+        "MRE_PS2": 31.110422,
+        "MRE_FH1": 36.739422,
+        "MRE_ALL": 28.418951,
+        "aop_mae_deg": 13.933028,
+        "n_valid_aop": 100,
+        "n_evaluable_aop": 100
+      },
+      "last_observed_train": {
+        "MRE_PS1": 11.998107,
+        "MRE_PS2": 13.200794,
+        "MRE_FH1": 22.453241,
+        "MRE_ALL": 15.884047,
+        "aop_mae_deg": 8.795021,
+        "n_valid_aop": 300,
+        "n_evaluable_aop": 300
+      },
+      "last_observed_validation_minus_train": {
+        "MRE_PS1": 5.4089,
+        "MRE_PS2": 17.909628,
+        "MRE_FH1": 14.28618,
+        "MRE_ALL": 12.534904,
+        "aop_mae_deg": 5.138007
+      }
+    },
+    "selected_best_delta_h2_minus_h1": {
+      "MRE_PS1": -4.918371,
+      "MRE_PS2": -3.661036,
+      "MRE_FH1": 4.960041,
+      "MRE_ALL": -1.206451,
+      "aop_mae_deg": 1.433516
+    },
+    "matched_epoch16": {
+      "h1_shared": {
+        "epoch": 16,
+        "MRE_PS1": 13.076735,
+        "MRE_PS2": 27.981321,
+        "MRE_FH1": 46.003628,
+        "MRE_ALL": 29.020559,
+        "aop_mae_deg": 13.931469,
+        "n_valid_aop": 100,
+        "n_evaluable_aop": 100
+      },
+      "h2_split": {
+        "epoch": 16,
+        "MRE_PS1": 17.407007,
+        "MRE_PS2": 31.110422,
+        "MRE_FH1": 36.739422,
+        "MRE_ALL": 28.418951,
+        "aop_mae_deg": 13.933028,
+        "n_valid_aop": 100,
+        "n_evaluable_aop": 100
+      },
+      "delta_h2_minus_h1": {
+        "MRE_PS1": 4.330272,
+        "MRE_PS2": 3.129101,
+        "MRE_FH1": -9.264206,
+        "MRE_ALL": -0.601608,
+        "aop_mae_deg": 0.001559
+      },
+      "interpretation": "At the strictly matched epoch 16, H2 PS2 is 3.129 px higher, while FH1 is 9.264 px lower; this mixed pointwise result does not establish that the split decoder alleviates late-stage regression."
+    },
+    "pointwise_readout": {
+      "PS2": "At the selected epoch-3 checkpoints, H2 is 3.661 px lower; this is a single-seed validation difference, not proof of a general decoder benefit.",
+      "FH1": "At the selected epoch-3 checkpoints, H2 is 4.960 px higher; independent decoding did not improve PS2 and FH1 together."
+    }
+  },
+  "historical_context_only": {
+    "unet_B2": {
+      "best_epoch": 15,
+      "MRE_PS1": 13.416825,
+      "MRE_PS2": 20.357471,
+      "MRE_FH1": 40.564011,
+      "MRE_ALL": 24.779436,
+      "aop_mae_deg": 8.51385,
+      "boundary": "Different architecture and budget; descriptive context only."
+    }
+  },
+  "resources": {
+    "total_phase_gpu_cap_seconds": 10800.0,
+    "formal_allocation_seconds": 7200.0,
+    "post_evaluation_reserve_seconds": 600.0,
+    "training_guard_seconds": 6600.0,
+    "ledger_closing_reserve_seconds": 120.0,
+    "ledger_elapsed_seconds": 7889.923,
+    "all_runs_closed": true,
+    "allocation_or_total_limit_exceeded": false
+  },
+  "conclusion": "The independent PS/FH decoder is implemented and trainable, but this partial single-seed control does not show a uniform validation advantage over the shared head.",
+  "limitations": [
+    "H2 completed 16 of 20 requested epochs; no epoch-20 endpoint exists.",
+    "One seed and one validation split; no statistical significance claim.",
+    "Best checkpoints are selected and reported on the same validation split.",
+    "This is a supervised decoder control, not the complete GeoEqui-LD method.",
+    "No EMA teacher, pseudo-labels, unlabeled consistency objective, or semi-supervised claim."
+  ]
+}

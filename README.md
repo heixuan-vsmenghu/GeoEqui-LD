@@ -127,8 +127,29 @@ HRNet 使用 `timm==1.0.28`、单通道输入和 stage4 最终融合的高分辨
 量级参考；两者架构不同，不据此作因果比较。详细过程见
 [Phase 1A 小结](reports/phase1a/PHASE1A_SUMMARY.md)、
 [HRNet 接入记录](reports/phase1a/HRNET_IMPLEMENTATION.md)和
-[validation 曲线](reports/phase1a/curves/validation_metrics.png)。目前仍未实现
+[validation 曲线](reports/phase1a/curves/validation_metrics.png)。Phase 1A 当时尚未实现
 PS/FH 解耦、EMA、伪标签或半监督损失。
+
+## Phase 1B：BN 短诊断与解码器对照
+
+Phase 1B 先固定 H1 的 best/last 权重，只用 train 图像重估一次 BatchNorm
+运行统计。epoch 20 端点随之改善，epoch 3 best 的整体结果却变差，因此目前只能说
+validation 对 BN 统计敏感，不能把波动的原因完全归到 BN。
+
+随后把共享三通道头拆成 PS 两通道头和 FH 一通道头，参数增加 13,920（29,318,355
+→ 29,332,275）。拆分初始化与原共享头输出完全一致，四样本 tiny-overfit 也通过。
+H2 的 formal allocation 是 7200 秒，其中给训练后复算预留 600 秒，训练循环使用
+6600 秒 guard；ledger 另留 120 秒 closing reserve。训练 guard 触发后，H2 停在
+16/20 轮，formal elapsed 为 6631.8 秒。`budget_exhausted` 表示主动停在下一轮之前，
+并非 7200 秒实际超时或 3 小时总上限超限。两个方案的 selected best 都在 epoch 3：
+H2 的 PS2 更低，但 FH1 与 AoP MAE 更高；严格对齐 epoch 16 后，H2 的 PS2 反而高
+3.1291 px，因此没有一致优势，也不能说独立头缓解了后期退步。
+
+详细数字见 [Phase 1B 小结](reports/phase1b/PHASE1B_SUMMARY.md)、
+[BN 诊断](reports/phase1b/BN_DIAGNOSTICS.md)、
+[解码器逐点对照](reports/phase1b/DECODER_COMPARISON.md)和
+[validation 曲线](reports/phase1b/curves/validation_metrics.png)。这仍是单 seed 的
+有标签监督对照，不是完整 GeoEqui-LD，也没有引入 EMA、伪标签或半监督损失。
 
 ## 数据现状
 

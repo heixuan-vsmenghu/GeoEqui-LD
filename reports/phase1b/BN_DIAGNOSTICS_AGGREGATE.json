@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "phase": "phase1b_bn_short_diagnostic",
+  "experiment_name": "H1_shared_B2_seed42_20e",
+  "status": "completed",
+  "testing_frozen": true,
+  "selection_split": "validation",
+  "bn_reestimation_used_for_model_selection": false,
+  "bn_reestimation_protocol": {
+    "source_split": "train",
+    "sample_count": 300,
+    "batch_size": 1,
+    "shuffle": false,
+    "random_augmentation": false,
+    "reset_running_stats": true,
+    "momentum": null,
+    "passes": 1,
+    "labels_not_used_as_model_inputs_for_update": true
+  },
+  "endpoints": {
+    "best": {
+      "epoch": 3,
+      "original_bn": {
+        "train": {
+          "MRE_PS1": 14.51233196258545,
+          "MRE_PS2": 18.82180404663086,
+          "MRE_FH1": 38.70991134643555,
+          "MRE_ALL": 24.01468276977539,
+          "n_samples": 300,
+          "n_valid_aop": 300,
+          "n_evaluable_aop": 300,
+          "aop_invalid_prediction_count": 0,
+          "aop_valid_ratio": 1.0,
+          "aop_invalid_prediction_ratio": 0.0,
+          "aop_mae_valid_deg": 9.828516960144043,
+          "aop_penalized_selection_score_deg": 9.828516960144043
+        },
+        "validation": {
+          "MRE_PS1": 22.482797622680664,
+          "MRE_PS2": 27.854063034057617,
+          "MRE_FH1": 46.837406158447266,
+          "MRE_ALL": 32.39141845703125,
+          "n_samples": 100,
+          "n_valid_aop": 100,
+          "n_evaluable_aop": 100,
+          "aop_invalid_prediction_count": 0,
+          "aop_valid_ratio": 1.0,
+          "aop_invalid_prediction_ratio": 0.0,
+          "aop_mae_valid_deg": 12.129548072814941,
+          "aop_penalized_selection_score_deg": 12.129548072814941
+        }
+      },
+      "train_images_bn_reestimated": {
+        "validation": {
+          "MRE_PS1": 35.3318977355957,
+          "MRE_PS2": 43.667579650878906,
+          "MRE_FH1": 42.344730377197266,
+          "MRE_ALL": 40.44806671142578,
+          "n_samples": 100,
+          "n_valid_aop": 100,
+          "n_evaluable_aop": 100,
+          "aop_invalid_prediction_count": 0,
+          "aop_valid_ratio": 1.0,
+          "aop_invalid_prediction_ratio": 0.0,
+          "aop_mae_valid_deg": 16.142013549804688,
+          "aop_penalized_selection_score_deg": 16.142013549804688
+        },
+        "delta_vs_original_validation": {
+          "MRE_PS1": 12.849100112915039,
+          "MRE_PS2": 15.813516616821289,
+          "MRE_FH1": -4.49267578125,
+          "MRE_ALL": 8.056648254394531,
+          "aop_mae_valid_deg": 4.012465476989746,
+          "aop_invalid_prediction_ratio": 0.0,
+          "aop_penalized_selection_score_deg": 4.012465476989746
+        }
+      },
+      "integrity": {
+        "original_train_eval_state_unchanged": true,
+        "original_validation_eval_state_unchanged": true,
+        "reestimated_validation_eval_state_unchanged": true,
+        "all_parameters_unchanged": true,
+        "only_bn_running_statistics_changed_during_reestimation": true,
+        "source_checkpoint_unchanged": true,
+        "frozen_copy_unchanged": true
+      }
+    },
+    "last": {
+      "epoch": 20,
+      "original_bn": {
+        "train": {
+          "MRE_PS1": 13.366778373718262,
+          "MRE_PS2": 30.054704666137695,
+          "MRE_FH1": 27.451066970825195,
+          "MRE_ALL": 23.624183654785156,
+          "n_samples": 300,
+          "n_valid_aop": 300,
+          "n_evaluable_aop": 300,
+          "aop_invalid_prediction_count": 0,
+          "aop_valid_ratio": 1.0,
+          "aop_invalid_prediction_ratio": 0.0,
+          "aop_mae_valid_deg": 15.298714637756348,
+          "aop_penalized_selection_score_deg": 15.298714637756348
+        },
+        "validation": {
+          "MRE_PS1": 20.148332595825195,
+          "MRE_PS2": 54.6460075378418,
+          "MRE_FH1": 44.131351470947266,
+          "MRE_ALL": 39.641902923583984,
+          "n_samples": 100,
+          "n_valid_aop": 100,
+          "n_evaluable_aop": 100,
+          "aop_invalid_prediction_count": 0,
+          "aop_valid_ratio": 1.0,
+          "aop_invalid_prediction_ratio": 0.0,
+          "aop_mae_valid_deg": 23.109397888183594,
+          "aop_penalized_selection_score_deg": 23.109397888183594
+        }
+      },
+      "train_images_bn_reestimated": {
+        "validation": {
+          "MRE_PS1": 17.308563232421875,
+          "MRE_PS2": 32.553123474121094,
+          "MRE_FH1": 39.96940994262695,
+          "MRE_ALL": 29.943700790405273,
+          "n_samples": 100,
+          "n_valid_aop": 100,
+          "n_evaluable_aop": 100,
+          "aop_invalid_prediction_count": 0,
+          "aop_valid_ratio": 1.0,
+          "aop_invalid_prediction_ratio": 0.0,
+          "aop_mae_valid_deg": 14.819779396057129,
+          "aop_penalized_selection_score_deg": 14.819779396057129
+        },
+        "delta_vs_original_validation": {
+          "MRE_PS1": -2.8397693634033203,
+          "MRE_PS2": -22.092884063720703,
+          "MRE_FH1": -4.1619415283203125,
+          "MRE_ALL": -9.698202133178711,
+          "aop_mae_valid_deg": -8.289618492126465,
+          "aop_invalid_prediction_ratio": 0.0,
+          "aop_penalized_selection_score_deg": -8.289618492126465
+        }
+      },
+      "integrity": {
+        "original_train_eval_state_unchanged": true,
+        "original_validation_eval_state_unchanged": true,
+        "reestimated_validation_eval_state_unchanged": true,
+        "all_parameters_unchanged": true,
+        "only_bn_running_statistics_changed_during_reestimation": true,
+        "source_checkpoint_unchanged": true,
+        "frozen_copy_unchanged": true
+      }
+    }
+  },
+  "claim_boundary": "A one-pass fixed BN-statistics diagnostic; it does not replace the original checkpoint result or establish the sole cause of validation variation."
+}

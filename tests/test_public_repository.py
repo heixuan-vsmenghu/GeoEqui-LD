@@ -12,6 +12,7 @@ PUBLIC_BINARY_ALLOWLIST = {
     "reports/phase05/curves/seed42_validation_metrics.png",
     "reports/phase06/curves/validation_metrics.png",
     "reports/phase1a/curves/validation_metrics.png",
+    "reports/phase1b/curves/validation_metrics.png",
 }
 PUBLIC_PHASE05_TEXT = {
     "reports/phase05/PHASE05_SUMMARY.md",
@@ -35,6 +36,14 @@ PUBLIC_PHASE1A_TEXT = {
     "reports/phase1a/TRAIN_MEAN_BASELINE.md",
     "reports/phase1a/aggregate_results.json",
     "reports/phase1a/sanitized_config.yaml",
+}
+PUBLIC_PHASE1B_TEXT = {
+    "reports/phase1b/BN_DIAGNOSTICS.md",
+    "reports/phase1b/BN_DIAGNOSTICS_AGGREGATE.json",
+    "reports/phase1b/DECODER_COMPARISON.md",
+    "reports/phase1b/PHASE1B_SUMMARY.md",
+    "reports/phase1b/aggregate_results.json",
+    "reports/phase1b/sanitized_config.yaml",
 }
 PUBLIC_FORBIDDEN_FIELDS = {
     "protocol_sha256",
@@ -85,7 +94,9 @@ def test_public_outputs_are_sanitized() -> None:
     digest = re.compile(r"\b(?:[0-9a-f]{40}|[0-9a-f]{64})\b")
     unix_machine_path = re.compile(r"(?<![A-Za-z0-9:])/(?:home|Users|mnt|tmp|var/tmp)/")
     unc_path = re.compile(r"\\\\[^\\\s]+\\[^\\\s]+")
-    for relative in PUBLIC_PHASE05_TEXT | PUBLIC_PHASE06_TEXT | PUBLIC_PHASE1A_TEXT:
+    for relative in (
+        PUBLIC_PHASE05_TEXT | PUBLIC_PHASE06_TEXT | PUBLIC_PHASE1A_TEXT | PUBLIC_PHASE1B_TEXT
+    ):
         assert relative in tracked, f"Missing tracked public output: {relative}"
         text = (root / relative).read_text(encoding="utf-8")
         assert digest.search(text) is None, f"Digest found in {relative}"
@@ -109,6 +120,8 @@ def test_public_outputs_are_sanitized() -> None:
         "reports/phase1a/HEATMAP_DECODE_SANITY.json",
         "reports/phase1a/TRAIN_MEAN_BASELINE.json",
         "reports/phase1a/aggregate_results.json",
+        "reports/phase1b/BN_DIAGNOSTICS_AGGREGATE.json",
+        "reports/phase1b/aggregate_results.json",
     ):
         aggregate = json.loads((root / relative).read_text(encoding="utf-8"))
         check_keys(aggregate)
