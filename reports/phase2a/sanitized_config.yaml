@@ -1,0 +1,42 @@
+phase: phase2a
+base_commit: 2be9d5908ce45ed9afc610908ef27620aa958fb4
+branch: feature/phase2a-data-geometry
+frozen_h3:
+  experiment: H3_specialized_B2_seed42_16e
+  checkpoint_epoch: 14
+  checkpoint_paths: private_gitignored
+  retrained: false
+data_intake:
+  selected_source_id: zenodo-17355570-v1
+  local_archive_path: redacted_gitignored
+  expected_size_bytes: 1071644672
+  expected_md5: redacted_from_public_config
+  allowed_archive_prefix: Dataset/Training/Unlabeled cases
+  current_status:
+    - BLOCKED_ACCESS
+    - BLOCKED_INTEGRITY
+  extraction_performed: false
+  per_file_manifest_path: private_gitignored
+  sealed_fingerprint_inventory: prior_phase_private_generated_artifact
+geometry:
+  keypoints: [PS1, PS2, FH1]
+  coordinate_order: [x, y]
+  align_corners: true
+  image_size_hw: [512, 512]
+  transform_direction: normalized_original_to_normalized_view
+  angle_unit: degrees
+  coordinate_unit: normalized_original_grid_distance
+  coordinate_weight_for_interface_test: 0.1
+  dsnt_temperature: 0.05
+  h3_check_samples: 1
+  h3_check_device: cpu
+testing_policy:
+  labels_read: false
+  images_read: false
+  evaluation_run: false
+  overlap_source: sealed_fingerprints_only
+scope_exclusions:
+  full_semi_supervised_training: false
+  ema_teacher: false
+  pseudo_labels: false
+  confidence_filtering: false

@@ -1,0 +1,84 @@
+{
+  "count_definitions": {
+    "byte_unique": "unique SHA-256 file-content groups, reported as a count only",
+    "decodable": "candidate images fully decoded by Pillow",
+    "discovered": "selected image members in a verified archive when supplied; otherwise supported image files found in the candidate directory",
+    "downloaded": "selected image members only after complete archive verification",
+    "excluded_overlap": "unique pixel groups matching any sealed labeled split",
+    "extracted": "supported image files present in the candidate directory",
+    "final": "pixel-unique groups after exact sealed-overlap exclusion",
+    "pixel_unique": "unique decoded RGB+width+height pixel groups, reported as a count only"
+  },
+  "counts": {
+    "byte_unique": 0,
+    "decodable": 0,
+    "discovered": 0,
+    "downloaded": 0,
+    "excluded_overlap": 0,
+    "extracted": 0,
+    "final": 0,
+    "pixel_unique": 0
+  },
+  "deduplication": {
+    "exact_byte_duplicate_excess": 0,
+    "exact_pixel_duplicate_excess": 0,
+    "example_duplicate_risk_groups": 0,
+    "example_files_excluded_automatically": false,
+    "example_named_files": 0,
+    "near_duplicates_removed": false
+  },
+  "group_independence": {
+    "case": "unknown",
+    "inferred_from_filename": false,
+    "patient": "unknown",
+    "video": "unknown"
+  },
+  "image_audit": {
+    "channel_distribution": {},
+    "corrupt": 0,
+    "decoded_format_distribution": {},
+    "mode_distribution": {},
+    "size_distribution": {}
+  },
+  "integrity": {
+    "actual_size_bytes": 1071644672,
+    "archive_checked": true,
+    "archive_present": true,
+    "md5_match": true,
+    "size_match": true,
+    "zip_readable": false
+  },
+  "overlap_audit": {
+    "comparison_executed": false,
+    "excluded_unique_groups_by_split": {
+      "testing": 0,
+      "train": 0,
+      "validation": 0
+    },
+    "expected_sealed_fingerprint_rows": {
+      "testing": 501,
+      "train": 300,
+      "validation": 100
+    },
+    "raw_testing_entry_available": false,
+    "sealed_fingerprint_rows": {
+      "testing": 501,
+      "train": 300,
+      "validation": 100
+    },
+    "testing": "not_run_no_candidate_pool",
+    "testing_images_read": false,
+    "testing_labels_read": false,
+    "train": "not_run_no_candidate_pool",
+    "validation": "not_run_no_candidate_pool"
+  },
+  "phase": "phase2a-data-intake",
+  "privacy": {
+    "private_manifest_required_for_per_file_evidence": true,
+    "public_contains_digests": false,
+    "public_contains_paths": false
+  },
+  "schema_version": 1,
+  "source_id": "zenodo-17355570-v1",
+  "status": "BLOCKED_INTEGRITY"
+}

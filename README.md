@@ -185,6 +185,24 @@ PS2 或 FH1 对照仍有混合变化，epoch 16 的 AoP 又比 H1/H2 高约 0.35
 损失的增强监督工程参照，不是导师原文的纯 MSE，也没有实现 EMA、伪标签或
 无标签一致性损失。
 
+## Phase 2A：数据接入与几何一致性接口
+
+Phase 2A 从冻结的 H3 提交 `2be9d5908ce45ed9afc610908ef27620aa958fb4`
+另开分支，没有追加网络结构或训练轮次。无标签工作已经实际下载并核验 Zenodo
+归档：文件大小和官方 MD5 匹配，但 ZIP 容器不可完整读取；正式 Codabench 流程又
+要求导师/负责人签署协议并由组织者批准。两项阻塞分别记为 `BLOCKED_INTEGRITY`
+和 `BLOCKED_ACCESS`，当前不把残缺归档强制解压为训练池。
+
+几何侧新增双视图接口：两个预测先逆变换回共同原图坐标，再计算像素空间 AoP
+度数差与归一化坐标距离。合成测试覆盖可逆性、单位、裁切、退化、batch、双分支
+梯度和 `lambda_geo=0`；冻结 H3 的单张 train 图像反向检查也通过，checkpoint
+前后字节一致。这个结果只证明接口接通，没有新增 validation/testing 指标，也不是
+半监督效果。
+
+详情见 [Phase 2A 小结](reports/phase2a/PHASE2A_SUMMARY.md)、
+[数据接入审计](reports/phase2a/DATA_INTAKE.md)和
+[几何契约](reports/phase2a/GEOMETRY_CONTRACT.md)。
+
 ## 数据现状
 
 当前可核验的监督部分是官方公开划分：
@@ -194,7 +212,7 @@ PS2 或 FH1 对照仍有混合变化，epoch 16 的 AoP 又比 H1/H2 高约 0.35
 | Train labeled | 300 | 可用于监督训练 |
 | Validation | 100 | 官方公开验证集 |
 | Testing | 501 | 仅用于冻结方案后的最终评估 |
-| Unlabeled pool | 0（当前本地可用） | 缺失，阻塞半监督训练 |
+| Unlabeled pool | 0（当前可训练） | 已定位正式来源；访问授权与公开包完整性双重阻塞 |
 
 监督数据本身已通过文件、标签、解码、边界和内容哈希检查。更完整的公开安全统计见：
 
@@ -202,7 +220,7 @@ PS2 或 FH1 对照仍有混合变化，epoch 16 的 AoP 又比 H1/H2 高约 0.35
 - [reports/phase0/dataset_statistics.json](reports/phase0/dataset_statistics.json)
 - [reports/phase0/duplicate_report.csv](reports/phase0/duplicate_report.csv)
 
-无标签数据和分组元数据的基础需求见 [reports/phase0/DATA_REQUIRED.md](reports/phase0/DATA_REQUIRED.md)，当前接入核验见 [reports/phase1c/UNLABELED_INTAKE.md](reports/phase1c/UNLABELED_INTAKE.md)。
+无标签数据和分组元数据的基础需求见 [reports/phase0/DATA_REQUIRED.md](reports/phase0/DATA_REQUIRED.md)，当前接入核验见 [reports/phase2a/DATA_INTAKE.md](reports/phase2a/DATA_INTAKE.md)。
 
 ## 当前监督结果
 
@@ -237,9 +255,9 @@ python -m pytest -q -p no:cacheprovider
 
 ## 当前边界
 
-- 尚未完成完整无标签数据审计；
-- tiny-overfit 和最小监督 baseline 已完成；完整半监督方法尚未开始；
-- 尚未实现 EMA 教师、伪标签或几何一致性损失；
+- 无标签正式训练包仍未通过访问和完整性审计；
+- tiny-overfit、监督 baseline 与几何一致性接口已完成；完整半监督方法尚未开始；
+- 尚未实现 EMA 教师、伪标签、置信度筛选或正式无标签训练；
 - 标签中没有患者、病例或视频分组字段，不能证明各 split 在患者级独立；
 - 当前任务是关键点检测和 AoP 定量，不是直接预测分娩结局。
 
@@ -249,4 +267,6 @@ Phase 0 的工程决策记录在 [reports/phase0/DECISIONS.md](reports/phase0/DE
 
 - IUGC 2025 官方代码：https://github.com/0oTyTo0/IUGC2025
 - IUGC 2025 数据页：https://www.kaggle.com/datasets/aspirexxx/iugc-ultrasound-dataset-miccai-2025
+- IUGC 2025 Codabench：https://www.codabench.org/competitions/7105/
+- Zenodo 数据记录：https://zenodo.org/records/17355570
 - 官方监督 baseline 论文：https://openreview.net/attachment?id=hj7hmvKc2r&name=pdf

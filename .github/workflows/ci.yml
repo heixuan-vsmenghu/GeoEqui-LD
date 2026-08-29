@@ -51,3 +51,5 @@ jobs:
           python scripts/review_phase1c_tiny.py --help
           python scripts/train_phase1c_specialized.py --help
           python scripts/summarize_phase1c.py --help
+          python scripts/audit_phase2a_unlabeled.py --help
+          python scripts/check_phase2a_h3_geometry.py --help

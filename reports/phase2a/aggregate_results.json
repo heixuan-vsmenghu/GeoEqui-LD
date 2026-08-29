@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "phase": "phase2a",
+  "branch": "feature/phase2a-data-geometry",
+  "base_commit": "2be9d5908ce45ed9afc610908ef27620aa958fb4",
+  "frozen_phase1c_tag": "phase1c-h3-v0.1.0",
+  "data": {
+    "status": [
+      "BLOCKED_ACCESS",
+      "BLOCKED_INTEGRITY"
+    ],
+    "official_expected_counts": {
+      "labeled_train": 300,
+      "unlabeled": 31421,
+      "validation": 100,
+      "testing": 501,
+      "example_reference_subset_within_unlabeled": 2045
+    },
+    "archive_download": {
+      "source_id": "zenodo-17355570-v1",
+      "archive_files_completed": 1,
+      "actual_size_bytes": 1071644672,
+      "official_size_match": true,
+      "official_md5_match": true,
+      "zip_readable": false,
+      "elapsed_seconds": 395,
+      "finite_retries_used": 0,
+      "gitignored": true
+    },
+    "stream_probe": {
+      "archive_members_observed": 31674,
+      "allowed_unlabeled_members_observed": 30864,
+      "allowed_unlabeled_image_entries_observed": 30407,
+      "probe_exit_code": 1,
+      "counts_are_incomplete_lower_bounds": true,
+      "accepted_as_trainable_pool": false
+    },
+    "candidate_pipeline_counts": {
+      "discovered_from_verified_archive": 0,
+      "downloaded_images_from_verified_archive": 0,
+      "extracted": 0,
+      "decodable": 0,
+      "byte_unique": 0,
+      "pixel_unique": 0,
+      "excluded_overlap": 0,
+      "final": 0
+    },
+    "sealed_fingerprint_rows_available": {
+      "train": 300,
+      "validation": 100,
+      "testing": 501
+    },
+    "candidate_overlap_comparison_executed": false,
+    "testing_labels_read": false,
+    "testing_images_read": false,
+    "testing_evaluation_run": false,
+    "filename_metadata_boundary_incident_recorded": true,
+    "patient_case_video_independence": "unknown",
+    "public_contains_paths_or_digests": false
+  },
+  "geometry": {
+    "definition": "angle_difference_degrees + 0.1 * normalized_coordinate_distance",
+    "angle_space": "original_image_pixels",
+    "coordinate_space": "common_normalized_original_image",
+    "validity_is_explicit": true,
+    "no_valid_geometry_is_not_counted_as_success": true,
+    "targeted_tests_passed": 30,
+    "h3_wiring": {
+      "status": "passed",
+      "sample_split": "train",
+      "sample_count": 1,
+      "labels_read": false,
+      "device": "cpu",
+      "wall_seconds": 16.78667570000107,
+      "gpu_budget_minutes_used": 0.0,
+      "gradient_gate_passed": true,
+      "backbone_gradient_tensors": 876,
+      "ps_enhancer_gradient_tensors": 8,
+      "fh_enhancer_gradient_tensors": 14,
+      "ps_decoder_gradient_tensors": 8,
+      "fh_decoder_gradient_tensors": 8,
+      "checkpoint_bytes_unchanged": true,
+      "optimizer_created": false,
+      "optimizer_step_called": false,
+      "formal_model_effect_claim": false
+    }
+  },
+  "verification": {
+    "full_test_suite_passed": 235,
+    "full_test_suite_warnings": 14,
+    "warning_scope": "third_party_matplotlib_pyparsing_deprecations",
+    "ruff_check_passed": true,
+    "new_cli_help_smoke_passed": true
+  },
+  "testing_frozen": true,
+  "full_semi_supervised_training_run": false,
+  "ema_implemented": false,
+  "pseudo_labels_implemented": false,
+  "confidence_filtering_implemented": false
+}
