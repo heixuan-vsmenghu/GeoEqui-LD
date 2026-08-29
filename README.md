@@ -1,6 +1,6 @@
 # GeoEqui-LD
 
-GeoEqui-LD 是一个面向产时超声三关键点检测的毕业设计工程。项目最终希望研究几何等变一致性能否帮助模型利用无标签图像；Phase 0 基础闭环已经冻结，Phase 0.5/0.6 的监督损失审计和 Phase 1A 的 B0 异常诊断、HRNet 监督参考接入也已完成。
+GeoEqui-LD 是一个面向产时超声三关键点检测的毕业设计工程。项目最终希望研究几何等变一致性能否帮助模型利用无标签图像；Phase 0 基础闭环、Phase 0.5/0.6 监督损失审计，以及 Phase 1A–1C 的 HRNet 监督架构检查均已完成。
 
 目前没有把完整半监督方案包装成“已经实现”：本地尚未取得完整无标签池，因此 EMA 教师、伪标签筛选和无标签几何一致性训练都还没有开始。
 
@@ -39,6 +39,7 @@ DSNT 坐标    [B, 3, 2]，顺序为 [x, y]，范围为 [-1, 1]
 - 坐标、热图、DSNT、AoP、变换、指标、访问策略、模型、监督训练和结果汇总均有自动化测试；
 - 4 张真实训练图上的 tiny-overfit 门槛已经通过。
 - 300/100 监督 baseline 已完成，并在方案冻结后对 testing 评估一次。
+- HRNet-W32 的共享头、PS/FH 独立头和专业特征增强监督对照已完成。
 
 这些内容说明基础工程可以继续做监督阶段验证，不代表半监督方法或最终论文实验已经完成。
 
@@ -151,6 +152,39 @@ H2 的 PS2 更低，但 FH1 与 AoP MAE 更高；严格对齐 epoch 16 后，H2 
 [validation 曲线](reports/phase1b/curves/validation_metrics.png)。这仍是单 seed 的
 有标签监督对照，不是完整 GeoEqui-LD，也没有引入 EMA、伪标签或半监督损失。
 
+## Phase 1C：PS/FH 专业特征增强
+
+Phase 1C 在 H2 的 HRNet-W32 主干和独立解码器之前加入两个小型专属模块：PS
+分支使用带显式 offset 与 modulation mask 的真实 `DeformConv2d` 和空间注意力，
+FH 分支使用无 BatchNorm 的 ASPP-lite 与 SE 注意力；两路都以残差和通道
+LayerNorm 收尾。基础主干与解码器从同一个 seed 42 起点复制且不共享存储，新增
+模块使 H3 的完整初始函数不再与 H2 等价。H3 共 29,372,695 个可训练参数，比 H2
+增加 40,420。
+
+真实 CUDA 算子前后向和固定四样本门槛均通过。四样本 500 步后的 eval MRE_ALL
+为 4.689 px，AoP 4/4 有效；四张本地叠加图没有发现坐标或通道错位。正式 H3
+在固定 300/100、B2 工程监督、FP32 和 16 轮预算下完整跑完：
+
+| 方案 | selected epoch | PS1 | PS2 | FH1 | MRE_ALL | AoP MAE |
+|---|---:|---:|---:|---:|---:|---:|
+| H1 共享头 | 3 | 22.483 | 27.854 | 46.837 | 32.391 px | 12.130° |
+| H2 独立头 | 3 | 17.564 | 24.193 | 51.797 | 31.185 px | 13.563° |
+| H3 专业增强 | 14 | 12.426 | 21.446 | 40.831 | 24.901 px | 10.289° |
+
+selected best 上 H3 的五项指标都低于 H1/H2，但逐轮结果并不一致：epoch 3 的
+PS2 或 FH1 对照仍有混合变化，epoch 16 的 AoP 又比 H1/H2 高约 0.35°，训练曲线
+也有明显波动。因此这里只能说当前单 seed、16 轮 validation 结果支持继续研究，
+不能声称稳定胜出。DeformConv2d CUDA backward 在锁定环境中没有严格确定性实现；
+本轮固定 seed 与数据顺序并启用 deterministic warn-only，不作位级复现承诺。
+
+详细过程见 [Phase 1C 小结](reports/phase1c/PHASE1C_SUMMARY.md)、
+[专业模块结构](reports/phase1c/SPECIALIZED_ARCHITECTURE.md)、
+[H1/H2/H3 逐点对照](reports/phase1c/SPECIALIZED_COMPARISON.md)、
+[无标签接入状态](reports/phase1c/UNLABELED_INTAKE.md)和
+[validation 曲线](reports/phase1c/curves/validation_metrics.png)。H3 仍是使用 B2
+损失的增强监督工程参照，不是导师原文的纯 MSE，也没有实现 EMA、伪标签或
+无标签一致性损失。
+
 ## 数据现状
 
 当前可核验的监督部分是官方公开划分：
@@ -168,7 +202,7 @@ H2 的 PS2 更低，但 FH1 与 AoP MAE 更高；严格对齐 epoch 16 后，H2 
 - [reports/phase0/dataset_statistics.json](reports/phase0/dataset_statistics.json)
 - [reports/phase0/duplicate_report.csv](reports/phase0/duplicate_report.csv)
 
-无标签数据和分组元数据的需求见 [reports/phase0/DATA_REQUIRED.md](reports/phase0/DATA_REQUIRED.md)。
+无标签数据和分组元数据的基础需求见 [reports/phase0/DATA_REQUIRED.md](reports/phase0/DATA_REQUIRED.md)，当前接入核验见 [reports/phase1c/UNLABELED_INTAKE.md](reports/phase1c/UNLABELED_INTAKE.md)。
 
 ## 当前监督结果
 
