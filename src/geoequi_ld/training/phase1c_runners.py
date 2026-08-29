@@ -70,6 +70,7 @@ PHASE1C_SEED = 42
 TINY_SAMPLE_COUNT = 4
 MILESTONE_FORMAT_VERSION = 1
 EPOCH_START_SAFETY_SECONDS = 1200.0
+EXPECTED_DEFORM_OPERATOR = "torchvision.ops.deform_conv.DeformConv2d"
 TINY_OVERLAY_FILENAMES = tuple(f"sample_{index:02d}.png" for index in range(4))
 RUNTIME_SOURCE_FILENAMES = (
     "src/geoequi_ld/data/access_policy.py",
@@ -93,6 +94,33 @@ RUNTIME_SOURCE_FILENAMES = (
     "src/geoequi_ld/training/phase1c_runners.py",
     "src/geoequi_ld/training/runtime.py",
 )
+
+
+def _seed_phase1c(seed: int) -> None:
+    """Seed Phase 1C while exposing DeformConv2d CUDA's determinism limit.
+
+    torchvision's CUDA backward for DeformConv2d has no strict deterministic
+    implementation in the locked environment.  Keep deterministic algorithms
+    enabled in warn-only mode instead of disabling the real operator or silently
+    falling back to an ordinary convolution.
+    """
+
+    seed_everything(seed, deterministic=True)
+    torch.use_deterministic_algorithms(True, warn_only=True)
+
+
+def _phase1c_determinism_policy() -> dict[str, Any]:
+    enabled = torch.are_deterministic_algorithms_enabled()
+    warn_only = torch.is_deterministic_algorithms_warn_only_enabled()
+    return {
+        "seed": PHASE1C_SEED,
+        "data_order_generator_seeded": True,
+        "cudnn_deterministic": bool(torch.backends.cudnn.deterministic),
+        "deterministic_algorithms_enabled": enabled,
+        "deterministic_algorithms_warn_only": warn_only,
+        "strict_bitwise_determinism_claimed": False,
+        "known_nondeterministic_operation": "DeformConv2d CUDA backward",
+    }
 
 
 def _contains_forbidden_component(path: str | Path) -> bool:
@@ -342,7 +370,7 @@ def build_phase1c_initialization() -> tuple[
 ]:
     """Create H2 and H3 from the same untrained seed-42 shared base on CPU."""
 
-    seed_everything(PHASE1C_SEED, deterministic=True)
+    _seed_phase1c(PHASE1C_SEED)
     shared = HRNetW32SharedHeatmap(align_corners=True).eval()
     h2 = HRNetW32SplitHeatmap.from_shared(shared).eval()
     del shared
@@ -364,6 +392,7 @@ def build_phase1c_initialization() -> tuple[
     h3_parameters = count_trainable_parameters(h3)
     metadata = {
         "seed": PHASE1C_SEED,
+        "determinism_policy": _phase1c_determinism_policy(),
         "method": "HRNetW32SpecializedHeatmap.from_split",
         "h2_backbone_state_sha256": _tensor_state_digest(h2.backbone.state_dict()),
         "h3_backbone_state_sha256": _tensor_state_digest(h3.backbone.state_dict()),
@@ -438,6 +467,40 @@ def _all_finite(values: Iterable[Tensor]) -> bool:
     return all(bool(torch.isfinite(value).all()) for value in values)
 
 
+def _operator_evidence_passed(evidence: Mapping[str, Any]) -> bool:
+    """Revalidate the real modulated DeformConv2d evidence fail-closed."""
+
+    try:
+        gradient_names = (
+            "offset_predictor_gradient_l1",
+            "mask_predictor_gradient_l1",
+            "deform_weight_gradient_l1",
+            "spatial_attention_gradient_l1",
+        )
+        gradients = [float(evidence[name]) for name in gradient_names]
+        return bool(
+            evidence["input_shape"] == [1, 32, 32, 32]
+            and evidence["offset_shape"] == [1, 18, 32, 32]
+            and evidence["mask_logits_shape"] == [1, 9, 32, 32]
+            and evidence["mask_shape"] == [1, 9, 32, 32]
+            and evidence["output_shape"] == [1, 32, 32, 32]
+            and float(evidence["initial_offset_max_abs"]) == 0.0
+            and float(evidence["initial_mask_logits_max_abs"]) == 0.0
+            and float(evidence["initial_mask_min"]) == 0.5
+            and float(evidence["initial_mask_max"]) == 0.5
+            and all(math.isfinite(value) and value > 0.0 for value in gradients)
+            and evidence["all_values_finite"] is True
+            and evidence["all_enhancer_gradients_finite"] is True
+            and evidence["deterministic_algorithms_enabled"] is True
+            and evidence["deterministic_algorithms_warn_only"] is True
+            and evidence["strict_deterministic_deform_backward_available"] is False
+            and evidence["actual_operator"] == EXPECTED_DEFORM_OPERATOR
+            and evidence["ordinary_conv_fallback"] is False
+        )
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
 def run_phase1c_deform_operator_probe(
     *,
     phase1c_config: str | Path,
@@ -445,7 +508,7 @@ def run_phase1c_deform_operator_probe(
     ledger_path: str | Path,
     repository_root: str | Path,
 ) -> dict[str, Any]:
-    """Exercise real modulated DeformConv2d CUDA forward/backward deterministically."""
+    """Exercise real modulated DeformConv2d CUDA forward/backward with seed 42."""
 
     protocol = load_phase1c_config(phase1c_config)
     output = require_phase1c_fresh_output(output_dir, repository_root=repository_root)
@@ -464,7 +527,7 @@ def run_phase1c_deform_operator_probe(
     )
     started = time.perf_counter()
     try:
-        seed_everything(PHASE1C_SEED, deterministic=True)
+        _seed_phase1c(PHASE1C_SEED)
         device = torch.device("cuda")
         torch.cuda.empty_cache()
         torch.cuda.reset_peak_memory_stats(device)
@@ -504,6 +567,10 @@ def run_phase1c_deform_operator_probe(
             "deterministic_algorithms_enabled": (
                 torch.are_deterministic_algorithms_enabled()
             ),
+            "deterministic_algorithms_warn_only": (
+                torch.is_deterministic_algorithms_warn_only_enabled()
+            ),
+            "strict_deterministic_deform_backward_available": False,
             "actual_operator": (
                 f"{enhancer.deform.__class__.__module__}."
                 f"{enhancer.deform.__class__.__name__}"
@@ -512,20 +579,7 @@ def run_phase1c_deform_operator_probe(
             "peak_memory_allocated_bytes": int(torch.cuda.max_memory_allocated(device)),
             "peak_memory_reserved_bytes": int(torch.cuda.max_memory_reserved(device)),
         }
-        passed = bool(
-            evidence["offset_shape"] == [1, 18, 32, 32]
-            and evidence["mask_shape"] == [1, 9, 32, 32]
-            and evidence["output_shape"] == [1, 32, 32, 32]
-            and evidence["initial_offset_max_abs"] == 0.0
-            and evidence["initial_mask_logits_max_abs"] == 0.0
-            and evidence["initial_mask_min"] == evidence["initial_mask_max"] == 0.5
-            and predictor_gradients["offset"] > 0
-            and predictor_gradients["mask"] > 0
-            and deform_gradient > 0
-            and evidence["all_values_finite"]
-            and evidence["all_enhancer_gradients_finite"]
-            and evidence["deterministic_algorithms_enabled"]
-        )
+        passed = _operator_evidence_passed(evidence)
         result: dict[str, Any] = {
             "schema_version": 1,
             "gate_id": "P1C_deform_cuda_probe",
@@ -593,6 +647,9 @@ def _require_passed_operator_probe(
     payload = json.loads(path.read_text(encoding="utf-8"))
     if payload.get("gate") != "PASS" or payload.get("status") != "completed":
         raise PermissionError("Phase 1C requires a passing CUDA DeformConv2d probe")
+    evidence = payload.get("evidence")
+    if not isinstance(evidence, Mapping) or not _operator_evidence_passed(evidence):
+        raise PermissionError("Phase 1C operator probe evidence is incomplete or invalid")
     if payload.get("protocol_config_binding") != _file_binding(
         phase1c_config,
         logical_name="configs/phase1c_specialized_enhancers.yaml",
@@ -927,6 +984,7 @@ def run_phase1c_tiny(
             ),
             "environment": _runtime_environment(repository_root),
             "runtime_source_binding": _runtime_source_binding(repository_root),
+            "determinism_policy": _phase1c_determinism_policy(),
             "eval_mode": eval_metrics,
             "visualization": {
                 **visualization,
@@ -959,6 +1017,7 @@ def run_phase1c_tiny(
                 "testing_frozen": True,
                 "training": config.to_dict(),
                 "model": protocol.model.to_dict(),
+                "determinism_policy": _phase1c_determinism_policy(),
             },
             seed=PHASE1C_SEED,
             metrics=eval_metrics,
@@ -1219,14 +1278,15 @@ def _fit_phase1c_supervised(
     budget = WallClockBudget.start(max_runtime_seconds)
     milestones = set(int(epoch) for epoch in milestone_epochs)
     for epoch in range(1, config.epochs + 1):
+        estimate = EPOCH_START_SAFETY_SECONDS
         if history:
             recent = history[-3:]
             estimate = max(
                 EPOCH_START_SAFETY_SECONDS,
                 1.25 * max(float(row["epoch_time_sec"]) for row in recent),
             )
-            if not budget.can_start(estimate):
-                break
+        if not budget.can_start(estimate):
+            break
         epoch_started = time.perf_counter()
         optimization_started = time.perf_counter()
         optimization_metrics = train_one_epoch(
@@ -1346,6 +1406,15 @@ def _fit_phase1c_supervised(
         },
         "per_epoch_train_metrics_semantics": "post_epoch_eval_mode_full_train_split",
         "epoch_start_safety_seconds": EPOCH_START_SAFETY_SECONDS,
+        "key_checkpoint_evaluation_start_guard_seconds": max(
+            180.0,
+            3.0
+            * max(
+                float(row["train_evaluation_time_sec"])
+                + float(row["validation_time_sec"])
+                for row in history
+            ),
+        ),
     }
 
 
@@ -1355,6 +1424,7 @@ def _initializations_match(
 ) -> bool:
     keys = (
         "seed",
+        "determinism_policy",
         "method",
         "h2_backbone_state_sha256",
         "h3_backbone_state_sha256",
@@ -1494,13 +1564,17 @@ def run_phase1c_formal(
     post_evaluation_reserve = float(protocol.resources.post_evaluation_reserve_seconds)
     training_allocation = allocation - post_evaluation_reserve
     started = time.perf_counter()
-    if training_allocation <= 0:
+    if training_allocation < EPOCH_START_SAFETY_SECONDS:
         ledger_snapshot = _finish_ledger(
             ledger,
             protocol.experiment_name,
             started=started,
             status="budget_exhausted",
-            details={"epochs_completed": 0, "reason": "post_evaluation_reserve"},
+            details={
+                "epochs_completed": 0,
+                "reason": "first_epoch_safety_guard",
+                "required_seconds": EPOCH_START_SAFETY_SECONDS,
+            },
         )
         result = {
             "schema_version": 1,
@@ -1553,6 +1627,7 @@ def run_phase1c_formal(
                 "training_allocated_seconds": training_allocation,
                 "post_evaluation_reserve_seconds": post_evaluation_reserve,
                 "total_phase_gpu_cap_seconds": protocol.resources.total_gpu_max_seconds,
+                "determinism_policy": _phase1c_determinism_policy(),
             },
             "environment": _runtime_environment(repository_root),
             "runtime_source_binding": _runtime_source_binding(repository_root),
@@ -1590,16 +1665,40 @@ def run_phase1c_formal(
             milestone_epochs=protocol.resources.milestone_epochs,
             train_generator=train_generator,
         )
-        key_metrics = _evaluate_key_checkpoints(
-            model,
-            optimizer,
-            output=output,
-            train_loader=train_evaluation_loader,
-            validation_loader=validation_loader,
-            dsnt=dsnt,
-            device=device,
-            config=config,
+        key_evaluation_guard = float(
+            summary["key_checkpoint_evaluation_start_guard_seconds"]
         )
+        key_evaluation_remaining = max(
+            0.0,
+            allocation - (time.perf_counter() - started),
+        )
+        if key_evaluation_remaining >= key_evaluation_guard:
+            key_evaluation_started = time.perf_counter()
+            key_metrics = {
+                "status": "completed",
+                "start_guard_seconds": key_evaluation_guard,
+                "remaining_at_start_seconds": key_evaluation_remaining,
+                "checkpoints": _evaluate_key_checkpoints(
+                    model,
+                    optimizer,
+                    output=output,
+                    train_loader=train_evaluation_loader,
+                    validation_loader=validation_loader,
+                    dsnt=dsnt,
+                    device=device,
+                    config=config,
+                ),
+            }
+            key_metrics["elapsed_seconds"] = (
+                time.perf_counter() - key_evaluation_started
+            )
+        else:
+            key_metrics = {
+                "status": "skipped_budget_guard",
+                "start_guard_seconds": key_evaluation_guard,
+                "remaining_at_start_seconds": key_evaluation_remaining,
+                "checkpoints": {},
+            }
         write_json(output / "key_checkpoint_metrics.json", key_metrics)
         torch.cuda.synchronize(device)
         total_elapsed = time.perf_counter() - started
@@ -1632,6 +1731,7 @@ def run_phase1c_formal(
             ],
             "key_checkpoint_metrics": key_metrics,
             "initialization": initialization,
+            "determinism_policy": _phase1c_determinism_policy(),
             "resource_measurements": {
                 "trainable_parameters": count_trainable_parameters(model),
                 "peak_memory_allocated_bytes": int(torch.cuda.max_memory_allocated(device)),

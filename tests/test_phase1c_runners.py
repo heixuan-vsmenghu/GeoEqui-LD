@@ -16,12 +16,65 @@ from geoequi_ld.training.phase1c_runners import (
     _formal_allocation_outcome,
     _ledger_run_binding,
     _metric_with_rates,
+    _operator_evidence_passed,
     _require_current_ledger_binding,
+    _seed_phase1c,
     build_phase1c_initialization,
     require_phase1c_fresh_output,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_phase1c_seed_policy_keeps_determinism_enabled_warn_only() -> None:
+    enabled = torch.are_deterministic_algorithms_enabled()
+    warn_only = torch.is_deterministic_algorithms_warn_only_enabled()
+    cudnn_deterministic = torch.backends.cudnn.deterministic
+    cudnn_benchmark = torch.backends.cudnn.benchmark
+    try:
+        _seed_phase1c(42)
+        assert torch.are_deterministic_algorithms_enabled()
+        assert torch.is_deterministic_algorithms_warn_only_enabled()
+        assert torch.backends.cudnn.deterministic
+        assert not torch.backends.cudnn.benchmark
+    finally:
+        torch.use_deterministic_algorithms(enabled, warn_only=warn_only)
+        torch.backends.cudnn.deterministic = cudnn_deterministic
+        torch.backends.cudnn.benchmark = cudnn_benchmark
+
+
+def test_operator_evidence_requires_real_deform_and_complete_gradients() -> None:
+    evidence: dict[str, Any] = {
+        "input_shape": [1, 32, 32, 32],
+        "offset_shape": [1, 18, 32, 32],
+        "mask_logits_shape": [1, 9, 32, 32],
+        "mask_shape": [1, 9, 32, 32],
+        "output_shape": [1, 32, 32, 32],
+        "initial_offset_max_abs": 0.0,
+        "initial_mask_logits_max_abs": 0.0,
+        "initial_mask_min": 0.5,
+        "initial_mask_max": 0.5,
+        "offset_predictor_gradient_l1": 1.0,
+        "mask_predictor_gradient_l1": 1.0,
+        "deform_weight_gradient_l1": 1.0,
+        "spatial_attention_gradient_l1": 1.0,
+        "all_values_finite": True,
+        "all_enhancer_gradients_finite": True,
+        "deterministic_algorithms_enabled": True,
+        "deterministic_algorithms_warn_only": True,
+        "strict_deterministic_deform_backward_available": False,
+        "actual_operator": "torchvision.ops.deform_conv.DeformConv2d",
+        "ordinary_conv_fallback": False,
+    }
+
+    assert _operator_evidence_passed(evidence)
+    for name, replacement in (
+        ("actual_operator", "torch.nn.modules.conv.Conv2d"),
+        ("ordinary_conv_fallback", True),
+        ("mask_predictor_gradient_l1", 0.0),
+    ):
+        drifted = {**evidence, name: replacement}
+        assert not _operator_evidence_passed(drifted)
 
 
 def _metrics(value: float) -> dict[str, Any]:
@@ -256,3 +309,35 @@ def test_fit_records_eval_mode_train_and_validation_every_epoch(
     assert saved.count("last.pt") == 2
     assert "epoch_001_model_only.pt" in saved
     assert "epoch_002_model_only.pt" in saved
+
+
+def test_fit_does_not_start_first_epoch_below_safety_budget(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import geoequi_ld.training.phase1c_runners as runners
+
+    monkeypatch.setattr(
+        runners,
+        "train_one_epoch",
+        lambda *args, **kwargs: pytest.fail("first epoch must not start"),
+    )
+    model = nn.Linear(1, 1)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
+
+    with pytest.raises(RuntimeError, match="did not permit one complete epoch"):
+        _fit_phase1c_supervised(
+            model,
+            "train_loader",  # type: ignore[arg-type]
+            "train_eval",  # type: ignore[arg-type]
+            "validation",  # type: ignore[arg-type]
+            optimizer,
+            dsnt=DSNT(temperature=0.05, align_corners=True),
+            device=torch.device("cpu"),
+            config=SimpleNamespace(epochs=1, seed=42),
+            output_dir=tmp_path,
+            checkpoint_config={"testing_frozen": True},
+            max_runtime_seconds=1199.0,
+            milestone_epochs=(1,),
+            train_generator=torch.Generator().manual_seed(42),
+        )

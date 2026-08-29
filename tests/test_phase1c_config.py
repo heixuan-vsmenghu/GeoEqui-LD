@@ -55,3 +55,21 @@ def test_phase1c_config_rejects_contract_drift(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="training contract drifted"):
         load_phase1c_config(drifted)
+
+
+@pytest.mark.parametrize("replacement", ['"false"', "false", "1"])
+def test_phase1c_config_requires_literal_boolean_testing_freeze(
+    tmp_path: Path,
+    replacement: str,
+) -> None:
+    source = (ROOT / "configs" / "phase1c_specialized_enhancers.yaml").read_text(
+        encoding="utf-8"
+    )
+    drifted = tmp_path / "testing-drift.yaml"
+    drifted.write_text(
+        source.replace("testing_frozen: true", f"testing_frozen: {replacement}"),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(PermissionError, match="boolean true"):
+        load_phase1c_config(drifted)

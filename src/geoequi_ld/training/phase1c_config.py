@@ -280,10 +280,12 @@ class Phase1CProtocolConfig:
         for section in ("training", "model", "optimizer", "resources"):
             if not isinstance(values[section], Mapping):
                 raise ValueError(f"Phase 1C '{section}' section must be a mapping")
+        if values["testing_frozen"] is not True:
+            raise PermissionError("Phase 1C testing_frozen must be the boolean true")
         config = cls(
             schema_version=int(values["schema_version"]),
             experiment_name=str(values["experiment_name"]),
-            testing_frozen=bool(values["testing_frozen"]),
+            testing_frozen=values["testing_frozen"],
             training=Phase1CTrainingConfig.from_mapping(values["training"]),
             model=Phase1CSpecializedModelConfig.from_mapping(values["model"]),
             optimizer=Phase1AOptimizerConfig.from_mapping(values["optimizer"]),
