@@ -1,0 +1,256 @@
+{
+  "phase": "phase1a-b0-diagnostics",
+  "status": "synthetic_only",
+  "synthetic_geometry_valid": true,
+  "target_aop_deg": 72.6459732055664,
+  "heatmap_size_hw": [
+    256,
+    256
+  ],
+  "input_size_hw": [
+    512,
+    512
+  ],
+  "sigma_heatmap_px": 4.0,
+  "cases": [
+    {
+      "case_id": "gaussian_argmax",
+      "decoder": "argmax",
+      "temperature": 0.05,
+      "raw_heatmap_mse": 0.0,
+      "zero_map_mse": 0.0007669904152862728,
+      "probability_sum_max_abs_error": 1.1324882507324219e-05,
+      "probability_entropy_normalized": 0.24610974280569908,
+      "decoded_heatmap_xy": [
+        [
+          80.0,
+          160.0
+        ],
+        [
+          160.0,
+          160.0
+        ],
+        [
+          105.0,
+          80.0
+        ]
+      ],
+      "coordinate_error_input_px": {
+        "PS1": 0.0,
+        "PS2": 0.0,
+        "FH1": 0.0
+      },
+      "MRE_ALL": 0.0,
+      "aop_official_valid": true,
+      "aop_predicted_deg": 72.6459732055664,
+      "aop_mae_valid_deg": 0.0,
+      "aop_penalized_score_deg": 0.0,
+      "aop_invalid_penalty_deg": 180.0
+    },
+    {
+      "case_id": "gaussian_dsnt_t1",
+      "decoder": "dsnt",
+      "temperature": 1.0,
+      "raw_heatmap_mse": 0.0,
+      "zero_map_mse": 0.0007669904152862728,
+      "probability_sum_max_abs_error": 6.538629531860352e-05,
+      "probability_entropy_normalized": 0.9999449163213757,
+      "decoded_heatmap_xy": [
+        [
+          127.40416717529297,
+          127.56556701660156
+        ],
+        [
+          127.56556701660156,
+          127.56556701660156
+        ],
+        [
+          127.45460510253906,
+          127.4041748046875
+        ]
+      ],
+      "coordinate_error_input_px": {
+        "PS1": 115.10166931152344,
+        "PS2": 91.9183349609375,
+        "FH1": 105.11260986328125
+      },
+      "MRE_ALL": 104.0442123413086,
+      "aop_official_valid": true,
+      "aop_predicted_deg": 72.64458465576172,
+      "aop_mae_valid_deg": 0.0013885498046875,
+      "aop_penalized_score_deg": 0.0013885498046875,
+      "aop_invalid_penalty_deg": 180.0
+    },
+    {
+      "case_id": "gaussian_dsnt_t0.05",
+      "decoder": "dsnt",
+      "temperature": 0.05,
+      "raw_heatmap_mse": 0.0,
+      "zero_map_mse": 0.0007669904152862728,
+      "probability_sum_max_abs_error": 1.1324882507324219e-05,
+      "probability_entropy_normalized": 0.24610974280569908,
+      "decoded_heatmap_xy": [
+        [
+          80.00091552734375,
+          159.99937438964844
+        ],
+        [
+          159.99937438964844,
+          159.99937438964844
+        ],
+        [
+          105.00032043457031,
+          80.00066375732422
+        ]
+      ],
+      "coordinate_error_input_px": {
+        "PS1": 0.0022226038854569197,
+        "PS2": 0.0018126516370102763,
+        "FH1": 0.0014741127379238605
+      },
+      "MRE_ALL": 0.0018364560091868043,
+      "aop_official_valid": true,
+      "aop_predicted_deg": 72.64608764648438,
+      "aop_mae_valid_deg": 0.00011444091796875,
+      "aop_penalized_score_deg": 0.00011444091796875,
+      "aop_invalid_penalty_deg": 180.0
+    },
+    {
+      "case_id": "gaussian_amplitude_0.1_dsnt_t0.05",
+      "decoder": "dsnt",
+      "temperature": 0.05,
+      "raw_heatmap_mse": 0.0006212621810846031,
+      "zero_map_mse": 0.0007669904152862728,
+      "probability_sum_max_abs_error": 3.1948089599609375e-05,
+      "probability_entropy_normalized": 0.9996293593586517,
+      "decoded_heatmap_xy": [
+        [
+          127.23307800292969,
+          127.68263244628906
+        ],
+        [
+          127.68263244628906,
+          127.68263244628906
+        ],
+        [
+          127.37356567382812,
+          127.23307800292969
+        ]
+      ],
+      "coordinate_error_input_px": {
+        "PS1": 114.68624114990234,
+        "PS2": 91.58657836914062,
+        "FH1": 104.73322296142578
+      },
+      "MRE_ALL": 103.6686782836914,
+      "aop_official_valid": true,
+      "aop_predicted_deg": 72.6465835571289,
+      "aop_mae_valid_deg": 0.0006103515625,
+      "aop_penalized_score_deg": 0.0006103515625,
+      "aop_invalid_penalty_deg": 180.0
+    },
+    {
+      "case_id": "gaussian_amplitude_0.01_dsnt_t0.05",
+      "decoder": "dsnt",
+      "temperature": 0.05,
+      "raw_heatmap_mse": 0.0007517272606492043,
+      "zero_map_mse": 0.0007669904152862728,
+      "probability_sum_max_abs_error": 9.590387344360352e-05,
+      "probability_entropy_normalized": 0.9999984918493449,
+      "decoded_heatmap_xy": [
+        [
+          127.48467254638672,
+          127.51049041748047
+        ],
+        [
+          127.51049041748047,
+          127.51049041748047
+        ],
+        [
+          127.49274444580078,
+          127.48467254638672
+        ]
+      ],
+      "coordinate_error_input_px": {
+        "PS1": 115.29713439941406,
+        "PS2": 92.0744400024414,
+        "FH1": 105.29109954833984
+      },
+      "MRE_ALL": 104.22089385986328,
+      "aop_official_valid": true,
+      "aop_predicted_deg": 72.6363525390625,
+      "aop_mae_valid_deg": 0.00962066650390625,
+      "aop_penalized_score_deg": 0.00962066650390625,
+      "aop_invalid_penalty_deg": 180.0
+    },
+    {
+      "case_id": "zero_heatmaps_dsnt_t0.05",
+      "decoder": "dsnt",
+      "temperature": 0.05,
+      "raw_heatmap_mse": 0.0007669904152862728,
+      "zero_map_mse": 0.0007669904152862728,
+      "probability_sum_max_abs_error": 0.0,
+      "probability_entropy_normalized": 1.0,
+      "decoded_heatmap_xy": [
+        [
+          127.5,
+          127.5
+        ],
+        [
+          127.5,
+          127.5
+        ],
+        [
+          127.5,
+          127.5
+        ]
+      ],
+      "coordinate_error_input_px": {
+        "PS1": 115.3343505859375,
+        "PS2": 92.1041488647461,
+        "FH1": 105.32508087158203
+      },
+      "MRE_ALL": 104.25452423095703,
+      "aop_official_valid": false,
+      "aop_predicted_deg": null,
+      "aop_mae_valid_deg": null,
+      "aop_penalized_score_deg": 180.0,
+      "aop_invalid_penalty_deg": 180.0
+    },
+    {
+      "case_id": "flat_heatmaps_dsnt_t0.05",
+      "decoder": "dsnt",
+      "temperature": 0.05,
+      "raw_heatmap_mse": 0.0625,
+      "zero_map_mse": 0.0007669904152862728,
+      "probability_sum_max_abs_error": 0.0,
+      "probability_entropy_normalized": 1.0,
+      "decoded_heatmap_xy": [
+        [
+          127.5,
+          127.5
+        ],
+        [
+          127.5,
+          127.5
+        ],
+        [
+          127.5,
+          127.5
+        ]
+      ],
+      "coordinate_error_input_px": {
+        "PS1": 115.3343505859375,
+        "PS2": 92.1041488647461,
+        "FH1": 105.32508087158203
+      },
+      "MRE_ALL": 104.25452423095703,
+      "aop_official_valid": false,
+      "aop_predicted_deg": null,
+      "aop_mae_valid_deg": null,
+      "aop_penalized_score_deg": 180.0,
+      "aop_invalid_penalty_deg": 180.0
+    }
+  ],
+  "interpretation_boundary": "These cases validate math and interfaces only; they do not establish the cause of the saved B0 endpoint."
+}

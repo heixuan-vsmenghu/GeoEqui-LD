@@ -1,6 +1,6 @@
 # GeoEqui-LD
 
-GeoEqui-LD 是一个面向产时超声三关键点检测的毕业设计工程。项目最终希望研究几何等变一致性能否帮助模型利用无标签图像；Phase 0 基础闭环已经冻结，Phase 0.5 监督损失审计和 **Phase 0.6 长预算忠实性检查**也已完成。
+GeoEqui-LD 是一个面向产时超声三关键点检测的毕业设计工程。项目最终希望研究几何等变一致性能否帮助模型利用无标签图像；Phase 0 基础闭环已经冻结，Phase 0.5/0.6 的监督损失审计和 Phase 1A 的 B0 异常诊断、HRNet 监督参考接入也已完成。
 
 目前没有把完整半监督方案包装成“已经实现”：本地尚未取得完整无标签池，因此 EMA 教师、伪标签筛选和无标签几何一致性训练都还没有开始。
 
@@ -36,7 +36,7 @@ DSNT 坐标    [B, 3, 2]，顺序为 [x, y]，范围为 [-1, 1]
 - 可微 DSNT；
 - DSNT 概率图的 Gaussian 分布约束，避免只优化坐标却得到不可解释的响应图；
 - 一个输入单通道、输出三通道半分辨率热图的小型 U-Net；
-- 坐标、热图、DSNT、AoP、变换、指标、访问策略、模型、监督训练和结果汇总共 94 项测试通过；
+- 坐标、热图、DSNT、AoP、变换、指标、访问策略、模型、监督训练和结果汇总均有自动化测试；
 - 4 张真实训练图上的 tiny-overfit 门槛已经通过。
 - 300/100 监督 baseline 已完成，并在方案冻结后对 testing 评估一次。
 
@@ -101,6 +101,35 @@ best，但 epoch 200 的两项主指标反而略差于 B1，因此 JS 在这次�
 [validation 曲线](reports/phase06/curves/validation_metrics.png)。这里只是增强监督
 基线审计，不包含 HRNet、PS/FH 解耦、EMA、伪标签或半监督损失。
 
+## Phase 1A：B0 诊断与 HRNet 监督参考
+
+Phase 1A 先回看纯 MSE 的异常，再按老师资料里的主干约定接入 HRNet-W32。B0
+第 200 轮的三张 raw heatmap 已经变成空间常数，DSNT 因此把三个点都解到中心，
+有效 AoP 降到 0/100。合成高斯检查同时确认：当前 DSNT 计算和坐标接口本身能工作，
+但热图振幅过低或过平时，大面积背景概率会把期望坐标拉向图像中心。由于没有保存
+崩溃转折区间的 checkpoint，这里只描述端点现象，不把原因写死。
+
+HRNet 使用 `timm==1.0.28`、单通道输入和 stage4 最终融合的高分辨率分支，后接
+共享三通道热图头。结构探针在 512×512、batch 1、FP32 下通过，峰值 reserved
+显存为 1.22 GiB；固定四样本跑满 500 步后，eval MRE_ALL 为 4.609 px，4/4 AoP
+有效，叠加图人工检查也没有发现坐标错位。
+
+20 轮监督参考完整跑完，validation checkpoint 仍按 AoP MAE、MRE_ALL、较早 epoch
+依次选择：
+
+| checkpoint | epoch | MRE_ALL | AoP MAE | 有效 AoP |
+|---|---:|---:|---:|---:|
+| best | 3 | 32.391 px | 12.130° | 100/100 |
+| last | 20 | 39.642 px | 23.109° | 100/100 |
+
+第 3 轮之后 validation 波动明显。batch size 1 下的 BatchNorm 是一个需要留意的
+风险，但现有结果没有证明它就是波动原因。旧 U-Net B2 的 24.779 px / 8.514°只作
+量级参考；两者架构不同，不据此作因果比较。详细过程见
+[Phase 1A 小结](reports/phase1a/PHASE1A_SUMMARY.md)、
+[HRNet 接入记录](reports/phase1a/HRNET_IMPLEMENTATION.md)和
+[validation 曲线](reports/phase1a/curves/validation_metrics.png)。目前仍未实现
+PS/FH 解耦、EMA、伪标签或半监督损失。
+
 ## 数据现状
 
 当前可核验的监督部分是官方公开划分：
@@ -149,11 +178,7 @@ $env:PYTHONPATH = "src"
 python -m pytest -q -p no:cacheprovider
 ```
 
-最新完整测试结果：
-
-```text
-94 passed
-```
+测试数量会随阶段增加，以本地 `pytest` 与 GitHub Actions 的当次输出为准。
 
 ## 当前边界
 
