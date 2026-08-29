@@ -203,6 +203,13 @@ Phase 2A 从冻结的 H3 提交 `2be9d5908ce45ed9afc610908ef27620aa958fb4`
 [数据接入审计](reports/phase2a/DATA_INTAKE.md)和
 [几何契约](reports/phase2a/GEOMETRY_CONTRACT.md)。
 
+Phase 2A 的对外沟通和获准归档验收材料见
+[收口状态](reports/phase2a_closeout/CLOSEOUT_STATUS.md)、
+[归档问题说明](reports/phase2a_closeout/ARCHIVE_ISSUE_BRIEF.md)、
+[导师进展稿](reports/phase2a_closeout/ADVISOR_PROGRESS_DRAFT.md)、
+[组织者咨询模板](reports/phase2a_closeout/ORGANIZER_ACCESS_EMAIL_TEMPLATE.md)和
+[接收验收清单](reports/phase2a_closeout/APPROVED_ARCHIVE_ACCEPTANCE_CHECKLIST.md)。
+
 ## 数据现状
 
 当前可核验的监督部分是官方公开划分：
