@@ -1,0 +1,67 @@
+schema_version: 1
+experiment_name: H2_split_B2_seed42_20e
+testing_frozen: true
+
+training:
+  seed: 42
+  device: auto
+  deterministic: true
+  input_size_hw: [512, 512]
+  heatmap_size_hw: [256, 256]
+  sigma_heatmap_px: 4.0
+  align_corners: true
+  dsnt_temperature: 0.05
+  keypoint_order: [PS1, PS2, FH1]
+  aop_vertex_index: 0
+  aop_pubic_axis_other_index: 1
+  aop_fetal_head_index: 2
+  batch_size: 1
+  epochs: 20
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  heatmap_loss_weight: 1.0
+  coordinate_loss_weight: 10.0
+  distribution_loss_weight: 1.0
+  max_grad_norm: 5.0
+  num_workers: 0
+  checkpoint_metric: aop_mae_deg
+
+model:
+  class: HRNetW32SplitHeatmap
+  shared_initialization_class: HRNetW32SharedHeatmap
+  shared_initialization_method: from_shared
+  backbone: hrnet_w32
+  timm_version: 1.0.28
+  pretrained: false
+  in_channels: 1
+  out_channels: 3
+  feature_location: ""
+  out_indices: [1]
+  feature_channels: 32
+  feature_reduction: 4
+  decoder_channels: [32, 16]
+  decoder_normalization: BatchNorm2d
+  decoder_activation: GELU
+  ps_out_channels: 2
+  fh_out_channels: 1
+  concatenation_order: [PS1, PS2, FH1]
+  interpolation_mode: bilinear
+  align_corners: true
+
+optimizer:
+  class: Adam
+  betas: [0.9, 0.999]
+  eps: 1.0e-08
+  amsgrad: false
+  foreach: false
+
+resources:
+  precision: float32
+  amp_enabled: false
+  tiny_max_steps: 500
+  tiny_max_seconds: 1200
+  replay_max_seconds: 600
+  formal_max_seconds: 7200
+  total_gpu_max_seconds: 10800
+  closing_reserve_seconds: 120
+  milestone_epochs: [1, 3, 5, 10, 20]

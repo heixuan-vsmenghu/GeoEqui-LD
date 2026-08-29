@@ -16,6 +16,7 @@ from geoequi_ld.training.engine import (
     compute_supervised_losses,
     evaluate_model,
     train_for_steps,
+    train_for_steps_bounded,
 )
 from geoequi_ld.training.runtime import resolve_device, seed_everything
 
@@ -156,6 +157,26 @@ def test_train_for_steps_updates_parameters_and_honours_limit() -> None:
     assert history[-1]["step"] == 3
     assert not torch.equal(before, model.logits.detach())
     assert all(torch.isfinite(torch.tensor(row["total_loss"])) for row in history)
+
+
+def test_bounded_steps_record_partial_status_when_time_limit_wins() -> None:
+    config = tiny_config()
+    loader = DataLoader(SyntheticLandmarks(), batch_size=2, shuffle=False)
+    model = LearnedHeatmaps()
+    result = train_for_steps_bounded(
+        model,
+        loader,
+        Adam(model.parameters(), lr=config.learning_rate),
+        dsnt=DSNT(temperature=config.dsnt_temperature, align_corners=True),
+        device=torch.device("cpu"),
+        config=config,
+        max_steps=3,
+        max_runtime_seconds=1e-9,
+    )
+    assert result.status == "budget_exhausted"
+    assert result.steps_completed == 1
+    assert len(result.history) == 1
+    assert result.history[0]["step_time_sec"] > 0
 
 
 def test_evaluation_reports_original_pixel_mre_and_aop() -> None:

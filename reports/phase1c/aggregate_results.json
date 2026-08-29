@@ -1,0 +1,413 @@
+{
+  "schema_version": 1,
+  "phase": "phase1c-supervised-specialized-enhancer-control",
+  "scope": "PS deformable/spatial enhancement and FH ASPP-lite/SE enhancement on the H2 split decoder",
+  "data_scope": {
+    "train_samples": 300,
+    "validation_samples": 100,
+    "testing_frozen": true,
+    "unlabeled_training_used": false
+  },
+  "protocol": {
+    "seed": 42,
+    "epochs": 16,
+    "batch_size": 1,
+    "loss": "B2 engineering supervision: heatmap MSE + 10x coordinate SmoothL1 + distribution JS",
+    "optimizer": "Adam",
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "precision": "FP32",
+    "selection_order": [
+      "penalized_aop_mae_deg",
+      "MRE_ALL",
+      "earlier_epoch"
+    ],
+    "classification": "enhanced supervised engineering reference"
+  },
+  "determinism": {
+    "seed_and_data_order_fixed": true,
+    "deterministic_algorithms_enabled": true,
+    "warn_only": true,
+    "strict_bitwise_reproducibility_claimed": false,
+    "reason": "CUDA backward for DeformConv2d is a known nondeterministic operation in this environment."
+  },
+  "architecture": {
+    "model": "HRNetW32SpecializedHeatmap",
+    "shape_contract": {
+      "input": [
+        1,
+        1,
+        512,
+        512
+      ],
+      "backbone_feature": [
+        1,
+        32,
+        128,
+        128
+      ],
+      "heatmaps": [
+        1,
+        3,
+        256,
+        256
+      ],
+      "dsnt_coordinates": [
+        1,
+        3,
+        2
+      ],
+      "channel_order": [
+        "PS1",
+        "PS2",
+        "FH1"
+      ]
+    },
+    "ps_enhancer": {
+      "deformable_operator": "torchvision.ops.DeformConv2d",
+      "offset_channels": 18,
+      "mask_channels": 9,
+      "initial_offset": 0.0,
+      "initial_mask": 0.5,
+      "spatial_attention_channels": 1,
+      "fusion": "GELU(deformable feature) x sigmoid(spatial attention), residual, channel LayerNorm",
+      "ordinary_convolution_fallback": false
+    },
+    "fh_enhancer": {
+      "aspp_lite_dilations": [
+        1,
+        3,
+        6
+      ],
+      "se_channels": "32 to 8 to 32",
+      "fusion": "ASPP-lite + SE feature, residual, channel LayerNorm",
+      "aspp_batch_normalization": false
+    },
+    "branch_isolation_scope": "PS-only and FH-only optimizer isolation was verified through the dedicated forward_ps and forward_fh diagnostic paths. The ordinary full forward computes both branches and was used for B2 training.",
+    "initialization_fairness": {
+      "backbone_and_decoders_equal_to_fresh_h2": true,
+      "parameter_storage_aliased": false,
+      "complete_h3_function_equal_to_h2": false,
+      "statement": "The backbone and split decoders start from identical values, but the new specialized enhancers make the complete function non-equivalent."
+    },
+    "parameter_counts": {
+      "h1_shared": 29318355,
+      "h2_split": 29332275,
+      "h3_specialized": 29372695,
+      "h3_minus_h2": 40420,
+      "ps_enhancer": 17148,
+      "fh_enhancer": 23272
+    }
+  },
+  "gates": {
+    "deformable_operator": {
+      "status": "PASS",
+      "actual_operator": "torchvision.ops.DeformConv2d",
+      "offset_shape": [
+        1,
+        18,
+        32,
+        32
+      ],
+      "mask_shape": [
+        1,
+        9,
+        32,
+        32
+      ],
+      "all_values_finite": true,
+      "offset_predictor_nonzero_gradient": true,
+      "mask_predictor_nonzero_gradient": true,
+      "deformable_weight_nonzero_gradient": true,
+      "ordinary_convolution_fallback": false,
+      "evidence_scope": "synthetic CUDA operator probe"
+    },
+    "four_sample_learning": {
+      "status": "PASS",
+      "steps": 500,
+      "programmatic_gate": "PASS",
+      "manual_coordinate_and_channel_review": "PASS",
+      "MRE_PS1": 1.927738,
+      "MRE_PS2": 3.166532,
+      "MRE_FH1": 8.974017,
+      "MRE_ALL": 4.689429,
+      "aop_mae_deg": 1.388813,
+      "n_valid_aop": 4,
+      "n_evaluable_aop": 4,
+      "all_dedicated_parameter_gradients_present": true,
+      "execution_history": {
+        "failed_attempts_before_pass": 1,
+        "minimal_gate_fixes": 1,
+        "fix_scope": "The gradient audit was narrowed to parameters participating in the configured final-feature path, while every dedicated enhancer and decoder parameter still had to receive a finite gradient.",
+        "model_loss_threshold_or_step_limit_changed": false
+      }
+    }
+  },
+  "supervised_comparison": {
+    "selected_best": {
+      "h1_shared": {
+        "epoch": 3,
+        "MRE_PS1": 22.482796,
+        "MRE_PS2": 27.854063,
+        "MRE_FH1": 46.837406,
+        "MRE_ALL": 32.391418,
+        "aop_mae_deg": 12.129548,
+        "n_valid_aop": 100,
+        "n_evaluable_aop": 100
+      },
+      "h2_split": {
+        "epoch": 3,
+        "MRE_PS1": 17.564425,
+        "MRE_PS2": 24.193027,
+        "MRE_FH1": 51.797447,
+        "MRE_ALL": 31.184967,
+        "aop_mae_deg": 13.563064,
+        "n_valid_aop": 100,
+        "n_evaluable_aop": 100
+      },
+      "h3_specialized": {
+        "epoch": 14,
+        "MRE_PS1": 12.426028,
+        "MRE_PS2": 21.445824,
+        "MRE_FH1": 40.830818,
+        "MRE_ALL": 24.90089,
+        "aop_mae_deg": 10.28918,
+        "n_valid_aop": 100,
+        "n_evaluable_aop": 100
+      },
+      "delta_h3_minus_h2": {
+        "MRE_PS1": -5.138397,
+        "MRE_PS2": -2.747203,
+        "MRE_FH1": -10.966629,
+        "MRE_ALL": -6.284077,
+        "aop_mae_deg": -3.273884
+      },
+      "delta_h3_minus_h1": {
+        "MRE_PS1": -10.056768,
+        "MRE_PS2": -6.408239,
+        "MRE_FH1": -6.006588,
+        "MRE_ALL": -7.490528,
+        "aop_mae_deg": -1.840368
+      },
+      "comparability_note": "Selected nodes occur at e3, e3, and e14 respectively and use the same validation split; this is descriptive, not a matched-epoch causal estimate."
+    },
+    "matched_epoch3": {
+      "h1_shared": {
+        "epoch": 3,
+        "MRE_PS1": 22.482796,
+        "MRE_PS2": 27.854063,
+        "MRE_FH1": 46.837406,
+        "MRE_ALL": 32.391418,
+        "aop_mae_deg": 12.129548,
+        "n_valid_aop": 100,
+        "n_evaluable_aop": 100
+      },
+      "h2_split": {
+        "epoch": 3,
+        "MRE_PS1": 17.564425,
+        "MRE_PS2": 24.193027,
+        "MRE_FH1": 51.797447,
+        "MRE_ALL": 31.184967,
+        "aop_mae_deg": 13.563064,
+        "n_valid_aop": 100,
+        "n_evaluable_aop": 100
+      },
+      "h3_specialized": {
+        "epoch": 3,
+        "MRE_PS1": 13.981051,
+        "MRE_PS2": 26.937969,
+        "MRE_FH1": 49.23893,
+        "MRE_ALL": 30.052652,
+        "aop_mae_deg": 11.420712,
+        "n_valid_aop": 100,
+        "n_evaluable_aop": 100
+      },
+      "delta_h3_minus_h2": {
+        "MRE_PS1": -3.583374,
+        "MRE_PS2": 2.744942,
+        "MRE_FH1": -2.558517,
+        "MRE_ALL": -1.132315,
+        "aop_mae_deg": -2.142352
+      },
+      "delta_h3_minus_h1": {
+        "MRE_PS1": -8.501745,
+        "MRE_PS2": -0.916094,
+        "MRE_FH1": 2.401524,
+        "MRE_ALL": -2.338766,
+        "aop_mae_deg": -0.708836
+      }
+    },
+    "matched_epoch16": {
+      "h1_shared": {
+        "epoch": 16,
+        "MRE_PS1": 13.076735,
+        "MRE_PS2": 27.981321,
+        "MRE_FH1": 46.003628,
+        "MRE_ALL": 29.020559,
+        "aop_mae_deg": 13.931469,
+        "n_valid_aop": 100,
+        "n_evaluable_aop": 100
+      },
+      "h2_split": {
+        "epoch": 16,
+        "MRE_PS1": 17.407007,
+        "MRE_PS2": 31.110422,
+        "MRE_FH1": 36.739422,
+        "MRE_ALL": 28.418951,
+        "aop_mae_deg": 13.933028,
+        "n_valid_aop": 100,
+        "n_evaluable_aop": 100
+      },
+      "h3_specialized": {
+        "epoch": 16,
+        "MRE_PS1": 13.90353,
+        "MRE_PS2": 23.274206,
+        "MRE_FH1": 40.63089,
+        "MRE_ALL": 25.936209,
+        "aop_mae_deg": 14.279244,
+        "n_valid_aop": 100,
+        "n_evaluable_aop": 100
+      },
+      "delta_h3_minus_h2": {
+        "MRE_PS1": -3.503477,
+        "MRE_PS2": -7.836216,
+        "MRE_FH1": 3.891468,
+        "MRE_ALL": -2.482742,
+        "aop_mae_deg": 0.346216
+      },
+      "delta_h3_minus_h1": {
+        "MRE_PS1": 0.826795,
+        "MRE_PS2": -4.707115,
+        "MRE_FH1": -5.372738,
+        "MRE_ALL": -3.08435,
+        "aop_mae_deg": 0.347775
+      }
+    },
+    "h3_train_validation_gaps": {
+      "epoch3": {
+        "MRE_PS1": 2.578763,
+        "MRE_PS2": 13.775031,
+        "MRE_FH1": 24.708481,
+        "MRE_ALL": 13.687428,
+        "aop_mae_deg": 3.519775
+      },
+      "selected_best_epoch14": {
+        "MRE_PS1": 4.62717,
+        "MRE_PS2": 12.424814,
+        "MRE_FH1": 19.941339,
+        "MRE_ALL": 12.331108,
+        "aop_mae_deg": 4.353225
+      },
+      "epoch16": {
+        "MRE_PS1": 4.633217,
+        "MRE_PS2": 11.683787,
+        "MRE_FH1": 18.570662,
+        "MRE_ALL": 11.629222,
+        "aop_mae_deg": 7.074894
+      }
+    },
+    "h2_gap_reference": {
+      "epoch3": {
+        "MRE_PS1": 4.120486,
+        "MRE_PS2": 9.069195,
+        "MRE_FH1": 15.447784,
+        "MRE_ALL": 9.545824,
+        "aop_mae_deg": 3.866484
+      },
+      "epoch16": {
+        "MRE_PS1": 5.4089,
+        "MRE_PS2": 17.909628,
+        "MRE_FH1": 14.28618,
+        "MRE_ALL": 12.534904,
+        "aop_mae_deg": 5.138007
+      }
+    },
+    "matched_gap_delta_h3_minus_h2": {
+      "epoch3": {
+        "MRE_PS1": -1.541723,
+        "MRE_PS2": 4.705836,
+        "MRE_FH1": 9.260697,
+        "MRE_ALL": 4.141604,
+        "aop_mae_deg": -0.346709
+      },
+      "epoch16": {
+        "MRE_PS1": -0.775683,
+        "MRE_PS2": -6.225841,
+        "MRE_FH1": 4.284482,
+        "MRE_ALL": -0.905682,
+        "aop_mae_deg": 1.936887
+      }
+    },
+    "pointwise_answers": {
+      "PS1": "H3 is lower than H2 at selected best, e3, and e16, but the combined two-enhancer intervention does not isolate a PS-module causal effect.",
+      "PS2": "H3 is lower at selected best and e16, but higher at matched e3; the direction is not uniform.",
+      "FH1": "H3 is lower at selected best and e3, but higher at matched e16; the direction is not uniform.",
+      "MRE_ALL": "H3 is lower than H2 at all three reported comparisons for this single run.",
+      "AoP_MAE": "H3 is lower at selected best and e3, but higher at matched e16.",
+      "train_validation_gap": "The H3 MRE_ALL gap is larger at e3 and smaller at e16 than H2; no uniform gap reduction is established."
+    },
+    "consistent_all_keypoint_improvement": false,
+    "consistency_evidence": [
+      "At matched e3, H3 PS2 is higher than H2.",
+      "At matched e16, H3 FH1 and AoP MAE are higher than H2."
+    ]
+  },
+  "formal_run": {
+    "status": "completed",
+    "epochs_completed": 16,
+    "epochs_requested": 16,
+    "selected_epoch": 14,
+    "elapsed_seconds": 4658.07,
+    "allocated_seconds": 9000.0,
+    "within_allocation": true,
+    "aggregate_gpu_cap_exceeded": false,
+    "best_and_last_recomputed": true
+  },
+  "resources": {
+    "trainable_parameters": 29372695,
+    "additional_parameters_over_h2": 40420,
+    "peak_memory_allocated_mib": 1223.328,
+    "peak_memory_reserved_mib": 1342.0,
+    "formal_elapsed_minutes": 77.635,
+    "new_gpu_cap_hours": 3.0,
+    "aggregate_cap_exceeded": false
+  },
+  "unlabeled_intake": {
+    "complete_pool_present": false,
+    "trainable_files_available": 0,
+    "configured_directory_present": false,
+    "default_data_root_available": false,
+    "environment_override_configured": false,
+    "partial_archive_usable": false,
+    "partial_archive_completion_percent": 21.816,
+    "conflicting_documented_counts": [
+      31421,
+      31121
+    ],
+    "example_subset_count": 2045,
+    "example_subset_can_be_assumed_additional": false,
+    "source_traceability": "Kaggle and Zenodo records are identifiable.",
+    "license_status": "Conflicting or incomplete license/signature evidence remains unresolved.",
+    "labeled_overlap_status": "Not audited; testing remained frozen, so complete overlap clearance is unknown."
+  },
+  "historical_context_only": {
+    "unet_B2": {
+      "best_epoch": 15,
+      "MRE_PS1": 13.416825,
+      "MRE_PS2": 20.357471,
+      "MRE_FH1": 40.564011,
+      "MRE_ALL": 24.779436,
+      "aop_mae_deg": 8.51385,
+      "boundary": "Different architecture and budget; descriptive context only."
+    }
+  },
+  "conclusion": "H3 passed the operator and four-sample gates and completed 16 epochs. Its selected validation node is better than H2 on all reported metrics, and MRE_ALL is lower at e3 and e16 as well; pointwise directions nevertheless conflict across matched epochs, so no consistent all-keypoint improvement is claimed.",
+  "limitations": [
+    "Single seed and one validation split; no significance, stability, SOTA, or generalization claim.",
+    "The selected nodes are chosen and described on the same validation split.",
+    "DeformConv2d CUDA backward ran under warn-only determinism, so bitwise rerun identity is not claimed.",
+    "H3 changes both PS and FH enhancement branches together; observed differences do not isolate either module causally.",
+    "This remains an enhanced supervised engineering reference using B2, not the advisor's pure-MSE recipe and not the complete GeoEqui-LD method.",
+    "No EMA teacher, pseudo-labels, unlabeled consistency loss, confidence mechanism, or semi-supervised training was used."
+  ]
+}

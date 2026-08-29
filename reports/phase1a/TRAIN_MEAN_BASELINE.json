@@ -1,0 +1,28 @@
+{
+  "phase": "phase1a-b0-diagnostics",
+  "status": "completed",
+  "baseline": "train_mean_coordinate_baseline",
+  "fit_split": "train",
+  "evaluation_split": "validation",
+  "data": {
+    "train_count": 300,
+    "validation_count": 100,
+    "fingerprints_verified": true
+  },
+  "validation_metrics": {
+    "MRE_PS1": 38.705379486083984,
+    "MRE_PS2": 61.050262451171875,
+    "MRE_FH1": 60.910587310791016,
+    "MRE_ALL": 53.55541229248047,
+    "n_samples": 100,
+    "n_valid_aop": 100,
+    "n_evaluable_aop": 100,
+    "aop_invalid_prediction_count": 0,
+    "aop_valid_ratio": 1.0,
+    "aop_invalid_prediction_ratio": 0.0,
+    "aop_mae_valid_deg": 12.988197326660156,
+    "aop_mae_deg": 12.988197326660156,
+    "aop_invalid_penalty_deg": 180.0
+  },
+  "interpretation_boundary": "This is a no-image reference, not a trained model and not an independent holdout result."
+}

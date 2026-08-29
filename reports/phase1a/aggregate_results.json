@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "phase": "phase1a-supervised-hrnet-reference",
+  "scope": "supervised train/validation diagnostics and HRNet-W32 reference",
+  "data_scope": {
+    "train_samples": 300,
+    "validation_samples": 100,
+    "testing_frozen": true
+  },
+  "integrity": {
+    "fixed_input_allowlist": true,
+    "formal_history_epochs_verified": 20,
+    "best_selection_tuple_recomputed": [
+      "aop_mae_deg",
+      "MRE_ALL",
+      "earlier_epoch"
+    ],
+    "best_and_last_checkpoints_verified": true,
+    "independent_validation_metrics_reproduced": true,
+    "public_outputs_sanitized": true
+  },
+  "b0_diagnostics": {
+    "best_epoch": 120,
+    "best_dsnt": {
+      "MRE_ALL": 148.47132873535156,
+      "aop_mae_valid_deg": 20.551496505737305,
+      "aop_penalized_selection_score_deg": 20.551496505737305,
+      "n_valid_aop": 100,
+      "n_evaluable_aop": 100,
+      "n_invalid_aop": 0
+    },
+    "best_argmax": {
+      "MRE_ALL": 71.71979522705078,
+      "aop_mae_valid_deg": 33.07792663574219,
+      "aop_penalized_selection_score_deg": 33.07792663574219
+    },
+    "last_epoch": 200,
+    "last_dsnt": {
+      "MRE_ALL": 153.9510955810547,
+      "aop_mae_valid_deg": null,
+      "aop_penalized_selection_score_deg": 180.0,
+      "n_valid_aop": 0,
+      "n_evaluable_aop": 100,
+      "n_invalid_aop": 100,
+      "raw_heatmap_spatial_std": 0.0
+    },
+    "train_mean_coordinate_reference": {
+      "MRE_ALL": 53.55541229248047,
+      "aop_mae_deg": 12.988197326660156,
+      "n_valid_aop": 100
+    },
+    "synthetic_decode_checks": {
+      "gaussian_argmax_MRE_ALL": 0.0,
+      "gaussian_dsnt_t0.05_MRE_ALL": 0.0018364560091868043,
+      "gaussian_dsnt_t1_MRE_ALL": 104.0442123413086,
+      "amplitude_0.1_dsnt_t0.05_MRE_ALL": 103.6686782836914,
+      "zero_and_flat_maps_produce_invalid_aop": true
+    },
+    "interpretation": "Endpoint evidence is consistent with a diffuse-to-flat response, but missing transition checkpoints prevent a causal localization of the collapse."
+  },
+  "gates": {
+    "A4_unet_B0": {
+      "execution_status": "completed",
+      "learning_outcome": "not_learned",
+      "steps": 1000,
+      "MRE_PS1": 3.0358810424804688,
+      "MRE_PS2": 184.03823852539062,
+      "MRE_FH1": 84.04066467285156,
+      "MRE_ALL": 90.37158966064453,
+      "n_valid_aop": 4,
+      "learned_all_three_keypoints": false
+    },
+    "B3_structure_probe": {
+      "gate": "PASS",
+      "trainable_parameters": 29318355,
+      "peak_allocated_mb": 1128.33837890625,
+      "peak_reserved_mb": 1246.0,
+      "first_adam_step_sec": 1.8899443999980576,
+      "warmed_full_step_sec": 0.40628709999873536,
+      "probe_elapsed_sec": 41.503446599999734,
+      "probe_allocated_sec": 900.0,
+      "all_four_stage4_scales_have_gradients": true,
+      "checkpoint_roundtrip": true
+    },
+    "B4_hrnet_B2": {
+      "gate": "PASS",
+      "steps": 500,
+      "MRE_ALL": 4.608837604522705,
+      "aop_mae_deg": 1.7401199340820312,
+      "n_valid_aop": 4,
+      "manual_visual_review": "passed"
+    }
+  },
+  "formal_run": {
+    "experiment": "H1_shared_B2_seed42_20e",
+    "status": "completed",
+    "epochs_completed": 20,
+    "seed": 42,
+    "selection_split": "validation",
+    "selection_order": [
+      "aop_mae_deg",
+      "MRE_ALL",
+      "earlier_epoch"
+    ],
+    "best": {
+      "epoch": 3,
+      "MRE_PS1": 22.48279571533203,
+      "MRE_PS2": 27.854063034057617,
+      "MRE_FH1": 46.837406158447266,
+      "MRE_ALL": 32.39141845703125,
+      "aop_mae_deg": 12.129548072814941
+    },
+    "last": {
+      "epoch": 20,
+      "MRE_PS1": 20.148330688476562,
+      "MRE_PS2": 54.6460075378418,
+      "MRE_FH1": 44.131351470947266,
+      "MRE_ALL": 39.641902923583984,
+      "aop_mae_deg": 23.109397888183594
+    },
+    "all_validation_aop_valid_at_best_and_last": true
+  },
+  "reference_only": {
+    "phase06_unet_B2": {
+      "best_epoch": 15,
+      "MRE_ALL": 24.779436111450195,
+      "aop_mae_deg": 8.513850212097168,
+      "comparison_boundary": "Different architecture; descriptive context only, not a causal architecture comparison."
+    }
+  },
+  "resources": {
+    "gpu_budget_limit_minutes": 180.0,
+    "experiment_ledger_gpu_minutes": 87.87335385166662,
+    "independent_validation_audit_gpu_minutes_approx": 0.35378333333333334,
+    "total_audited_gpu_minutes_approx": 88.22713718499995
+  },
+  "limitations": [
+    "Single seed for the 20-epoch HRNet reference.",
+    "Validation volatility is observed; batch-size-1 BatchNorm is a plausible risk, not a causally established explanation.",
+    "The shared decoder is a supervised reference, not the planned PS/FH-decoupled model.",
+    "No EMA teacher, pseudo-labels, unlabeled consistency objective, or semi-supervised claim."
+  ]
+}

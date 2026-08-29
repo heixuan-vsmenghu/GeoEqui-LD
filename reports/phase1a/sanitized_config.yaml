@@ -1,0 +1,41 @@
+phase: phase1a-supervised-hrnet-reference
+data_scope:
+  allowed_splits:
+  - train
+  - validation
+  testing_frozen: true
+  train_samples: 300
+  validation_samples: 100
+model:
+  class: HRNetW32SharedHeatmap
+  backbone: hrnet_w32
+  pretrained: false
+  in_channels: 1
+  stage4_high_resolution_feature:
+  - 32
+  - 128
+  - 128
+  decoder_channels:
+  - 32
+  - 16
+  - 3
+  output_heatmap_hw:
+  - 256
+  - 256
+  trainable_parameters: 29318355
+training:
+  seed: 42
+  epochs: 20
+  batch_size: 1
+  learning_rate: 0.001
+  optimizer: Adam
+  optimizer_foreach: false
+  precision: float32
+  supervision: heatmap MSE + coordinate SmoothL1 + distribution JS
+  dsnt_temperature: 0.05
+selection:
+  split: validation
+  order:
+  - aop_mae_deg
+  - MRE_ALL
+  - earlier_epoch

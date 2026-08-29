@@ -1,0 +1,36 @@
+schema_version: 1
+phase: phase1b-supervised-decoder-control
+data:
+  train_samples: 300
+  validation_samples: 100
+  testing_frozen: true
+training:
+  seed: 42
+  batch_size: 1
+  epochs_requested: 20
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  optimizer: Adam
+  precision: float32
+  loss: heatmap MSE + 10 * coordinate SmoothL1 + distribution JS
+model:
+  backbone: HRNet-W32
+  input_channels: 1
+  shared_head: one 3-channel heatmap decoder
+  split_head: PS 2-channel decoder + FH 1-channel decoder
+  concatenation_order:
+  - PS1
+  - PS2
+  - FH1
+  pretrained: false
+selection:
+- validation AoP MAE
+- validation MRE_ALL
+- earlier epoch
+resources:
+  formal_allocation_seconds: 7200
+  post_evaluation_reserve_seconds: 600
+  training_guard_seconds: 6600
+  total_phase_gpu_budget_seconds: 10800
+  ledger_closing_reserve_seconds: 120
+claim_boundary: supervised diagnostic only; not the complete semi-supervised method

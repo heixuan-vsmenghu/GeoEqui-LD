@@ -21,6 +21,7 @@ from geoequi_ld.geometry.coordinates import normalized_to_pixel
 from geoequi_ld.metrics.keypoints import absolute_angle_error, summarize_keypoint_metrics
 from geoequi_ld.models.decoding import decode_heatmaps
 from geoequi_ld.models.dsnt import DSNT, spatial_expectation, spatial_softmax
+from geoequi_ld.training.budget import WallClockBudget
 from geoequi_ld.training.checkpoints import save_checkpoint
 from geoequi_ld.training.config import SupervisedTrainingConfig
 
@@ -31,6 +32,18 @@ class SupervisedLosses:
     heatmap_mse: Tensor
     coordinate_smooth_l1: Tensor
     distribution_js: Tensor
+
+
+@dataclass(frozen=True)
+class BoundedStepTrainingResult:
+    """Auditable outcome of a max-step/max-time tiny training run."""
+
+    status: str
+    history: list[dict[str, float]]
+    steps_completed: int
+    elapsed_seconds: float
+    max_steps: int
+    max_runtime_seconds: float | None
 
 
 def _masked_mean(values: Tensor, mask: Tensor) -> Tensor:
@@ -227,12 +240,61 @@ def train_for_steps(
 ) -> list[dict[str, float]]:
     """Repeat a tiny loader until exactly ``max_steps`` optimizer steps."""
 
+    return train_for_steps_bounded(
+        model,
+        data_loader,
+        optimizer,
+        dsnt=dsnt,
+        device=device,
+        config=config,
+        max_steps=max_steps,
+    ).history
+
+
+def train_for_steps_bounded(
+    model: nn.Module,
+    data_loader: Iterable[Mapping[str, Any]],
+    optimizer: Optimizer,
+    *,
+    dsnt: DSNT,
+    device: torch.device,
+    config: SupervisedTrainingConfig,
+    max_steps: int,
+    max_runtime_seconds: float | None = None,
+) -> BoundedStepTrainingResult:
+    """Repeat a tiny loader until the step or monotonic time limit is reached."""
+
     if max_steps <= 0:
         raise ValueError("max_steps must be positive")
+    if max_runtime_seconds is not None and max_runtime_seconds <= 0:
+        raise ValueError("max_runtime_seconds must be positive when provided")
+    started = time.perf_counter()
+    budget = (
+        WallClockBudget.start(max_runtime_seconds)
+        if max_runtime_seconds is not None
+        else None
+    )
     history: list[dict[str, float]] = []
     steps = 0
     while steps < max_steps:
+        saw_batch = False
         for raw_batch in data_loader:
+            saw_batch = True
+            recent = history[-10:]
+            estimated_step = (
+                sum(row["step_time_sec"] for row in recent) / len(recent) if recent else 0.0
+            )
+            if budget is not None and steps > 0 and not budget.can_start(estimated_step):
+                elapsed = time.perf_counter() - started
+                return BoundedStepTrainingResult(
+                    status="budget_exhausted",
+                    history=history,
+                    steps_completed=steps,
+                    elapsed_seconds=elapsed,
+                    max_steps=max_steps,
+                    max_runtime_seconds=max_runtime_seconds,
+                )
+            step_started = time.perf_counter()
             batch = _to_device(raw_batch, device)
             model.train()
             optimizer.zero_grad(set_to_none=True)
@@ -260,11 +322,21 @@ def train_for_steps(
                     "heatmap_mse": float(losses.heatmap_mse.detach().cpu()),
                     "coordinate_smooth_l1": float(losses.coordinate_smooth_l1.detach().cpu()),
                     "distribution_js": float(losses.distribution_js.detach().cpu()),
+                    "step_time_sec": time.perf_counter() - step_started,
                 }
             )
             if steps >= max_steps:
                 break
-    return history
+        if not saw_batch:
+            raise ValueError("Data loader produced no samples")
+    return BoundedStepTrainingResult(
+        status="completed",
+        history=history,
+        steps_completed=steps,
+        elapsed_seconds=time.perf_counter() - started,
+        max_steps=max_steps,
+        max_runtime_seconds=max_runtime_seconds,
+    )
 
 
 def _normalized_batch_to_original_pixels(
@@ -436,10 +508,13 @@ def fit_supervised(
     config: SupervisedTrainingConfig,
     output_dir: str | Path,
     checkpoint_config: Mapping[str, Any],
+    max_runtime_seconds: float | None = None,
 ) -> dict[str, Any]:
-    """Train, select on validation only, and write best/last checkpoints."""
+    """Train and select on validation, optionally stopping at an epoch boundary."""
 
     config.validate()
+    if max_runtime_seconds is not None and max_runtime_seconds <= 0:
+        raise ValueError("max_runtime_seconds must be positive when provided")
     run_dir = Path(output_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
     write_json(run_dir / "config.json", checkpoint_config)
@@ -448,8 +523,21 @@ def fit_supervised(
     best_selection_key = (math.inf, math.inf, math.inf)
     best_epoch = -1
     best_metrics: dict[str, Any] | None = None
+    started = time.perf_counter()
+    budget = (
+        WallClockBudget.start(max_runtime_seconds)
+        if max_runtime_seconds is not None
+        else None
+    )
 
     for epoch in range(1, config.epochs + 1):
+        if budget is not None and history:
+            recent_epochs = history[-3:]
+            estimated_epoch = sum(
+                float(row["epoch_time_sec"]) for row in recent_epochs
+            ) / len(recent_epochs)
+            if not budget.can_start(estimated_epoch):
+                break
         epoch_started = time.perf_counter()
         train_started = time.perf_counter()
         train_metrics = train_one_epoch(
@@ -494,6 +582,10 @@ def fit_supervised(
             config=checkpoint_config,
             seed=config.seed,
             metrics=validation_metrics,
+            extra={
+                "runtime_elapsed_sec": time.perf_counter() - started,
+                "runtime_limit_sec": max_runtime_seconds,
+            },
         )
         selection_key = (metric_value, mre_value, float(epoch))
         if selection_key < best_selection_key:
@@ -509,11 +601,20 @@ def fit_supervised(
                 config=checkpoint_config,
                 seed=config.seed,
                 metrics=validation_metrics,
+                extra={
+                    "runtime_elapsed_sec": time.perf_counter() - started,
+                    "runtime_limit_sec": max_runtime_seconds,
+                },
             )
         write_history_csv(run_dir / "train_log.csv", history)
 
+    completed_all_epochs = len(history) == config.epochs
     summary = {
-        "status": "completed",
+        "status": "completed" if completed_all_epochs else "budget_exhausted",
+        "epochs_completed": len(history),
+        "epochs_requested": config.epochs,
+        "runtime_elapsed_sec": time.perf_counter() - started,
+        "runtime_limit_sec": max_runtime_seconds,
         "selection_split": "validation",
         "checkpoint_metric": config.checkpoint_metric,
         "selection_tiebreak": [config.checkpoint_metric, "MRE_ALL", "earlier_epoch"],

@@ -1,6 +1,6 @@
 # GeoEqui-LD
 
-GeoEqui-LD 是一个面向产时超声三关键点检测的毕业设计工程。项目最终希望研究几何等变一致性能否帮助模型利用无标签图像；Phase 0 基础闭环已经冻结，Phase 0.5 监督损失审计和 **Phase 0.6 长预算忠实性检查**也已完成。
+GeoEqui-LD 是一个面向产时超声三关键点检测的毕业设计工程。项目最终希望研究几何等变一致性能否帮助模型利用无标签图像；Phase 0 基础闭环、Phase 0.5/0.6 监督损失审计，以及 Phase 1A–1C 的 HRNet 监督架构检查均已完成。
 
 目前没有把完整半监督方案包装成“已经实现”：本地尚未取得完整无标签池，因此 EMA 教师、伪标签筛选和无标签几何一致性训练都还没有开始。
 
@@ -36,9 +36,10 @@ DSNT 坐标    [B, 3, 2]，顺序为 [x, y]，范围为 [-1, 1]
 - 可微 DSNT；
 - DSNT 概率图的 Gaussian 分布约束，避免只优化坐标却得到不可解释的响应图；
 - 一个输入单通道、输出三通道半分辨率热图的小型 U-Net；
-- 坐标、热图、DSNT、AoP、变换、指标、访问策略、模型、监督训练和结果汇总共 94 项测试通过；
+- 坐标、热图、DSNT、AoP、变换、指标、访问策略、模型、监督训练和结果汇总均有自动化测试；
 - 4 张真实训练图上的 tiny-overfit 门槛已经通过。
 - 300/100 监督 baseline 已完成，并在方案冻结后对 testing 评估一次。
+- HRNet-W32 的共享头、PS/FH 独立头和专业特征增强监督对照已完成。
 
 这些内容说明基础工程可以继续做监督阶段验证，不代表半监督方法或最终论文实验已经完成。
 
@@ -101,6 +102,89 @@ best，但 epoch 200 的两项主指标反而略差于 B1，因此 JS 在这次�
 [validation 曲线](reports/phase06/curves/validation_metrics.png)。这里只是增强监督
 基线审计，不包含 HRNet、PS/FH 解耦、EMA、伪标签或半监督损失。
 
+## Phase 1A：B0 诊断与 HRNet 监督参考
+
+Phase 1A 先回看纯 MSE 的异常，再按老师资料里的主干约定接入 HRNet-W32。B0
+第 200 轮的三张 raw heatmap 已经变成空间常数，DSNT 因此把三个点都解到中心，
+有效 AoP 降到 0/100。合成高斯检查同时确认：当前 DSNT 计算和坐标接口本身能工作，
+但热图振幅过低或过平时，大面积背景概率会把期望坐标拉向图像中心。由于没有保存
+崩溃转折区间的 checkpoint，这里只描述端点现象，不把原因写死。
+
+HRNet 使用 `timm==1.0.28`、单通道输入和 stage4 最终融合的高分辨率分支，后接
+共享三通道热图头。结构探针在 512×512、batch 1、FP32 下通过，峰值 reserved
+显存为 1.22 GiB；固定四样本跑满 500 步后，eval MRE_ALL 为 4.609 px，4/4 AoP
+有效，叠加图人工检查也没有发现坐标错位。
+
+20 轮监督参考完整跑完，validation checkpoint 仍按 AoP MAE、MRE_ALL、较早 epoch
+依次选择：
+
+| checkpoint | epoch | MRE_ALL | AoP MAE | 有效 AoP |
+|---|---:|---:|---:|---:|
+| best | 3 | 32.391 px | 12.130° | 100/100 |
+| last | 20 | 39.642 px | 23.109° | 100/100 |
+
+第 3 轮之后 validation 波动明显。batch size 1 下的 BatchNorm 是一个需要留意的
+风险，但现有结果没有证明它就是波动原因。旧 U-Net B2 的 24.779 px / 8.514°只作
+量级参考；两者架构不同，不据此作因果比较。详细过程见
+[Phase 1A 小结](reports/phase1a/PHASE1A_SUMMARY.md)、
+[HRNet 接入记录](reports/phase1a/HRNET_IMPLEMENTATION.md)和
+[validation 曲线](reports/phase1a/curves/validation_metrics.png)。Phase 1A 当时尚未实现
+PS/FH 解耦、EMA、伪标签或半监督损失。
+
+## Phase 1B：BN 短诊断与解码器对照
+
+Phase 1B 先固定 H1 的 best/last 权重，只用 train 图像重估一次 BatchNorm
+运行统计。epoch 20 端点随之改善，epoch 3 best 的整体结果却变差，因此目前只能说
+validation 对 BN 统计敏感，不能把波动的原因完全归到 BN。
+
+随后把共享三通道头拆成 PS 两通道头和 FH 一通道头，参数增加 13,920（29,318,355
+→ 29,332,275）。拆分初始化与原共享头输出完全一致，四样本 tiny-overfit 也通过。
+H2 的 formal allocation 是 7200 秒，其中给训练后复算预留 600 秒，训练循环使用
+6600 秒 guard；ledger 另留 120 秒 closing reserve。训练 guard 触发后，H2 停在
+16/20 轮，formal elapsed 为 6631.8 秒。`budget_exhausted` 表示主动停在下一轮之前，
+并非 7200 秒实际超时或 3 小时总上限超限。两个方案的 selected best 都在 epoch 3：
+H2 的 PS2 更低，但 FH1 与 AoP MAE 更高；严格对齐 epoch 16 后，H2 的 PS2 反而高
+3.1291 px，因此没有一致优势，也不能说独立头缓解了后期退步。
+
+详细数字见 [Phase 1B 小结](reports/phase1b/PHASE1B_SUMMARY.md)、
+[BN 诊断](reports/phase1b/BN_DIAGNOSTICS.md)、
+[解码器逐点对照](reports/phase1b/DECODER_COMPARISON.md)和
+[validation 曲线](reports/phase1b/curves/validation_metrics.png)。这仍是单 seed 的
+有标签监督对照，不是完整 GeoEqui-LD，也没有引入 EMA、伪标签或半监督损失。
+
+## Phase 1C：PS/FH 专业特征增强
+
+Phase 1C 在 H2 的 HRNet-W32 主干和独立解码器之前加入两个小型专属模块：PS
+分支使用带显式 offset 与 modulation mask 的真实 `DeformConv2d` 和空间注意力，
+FH 分支使用无 BatchNorm 的 ASPP-lite 与 SE 注意力；两路都以残差和通道
+LayerNorm 收尾。基础主干与解码器从同一个 seed 42 起点复制且不共享存储，新增
+模块使 H3 的完整初始函数不再与 H2 等价。H3 共 29,372,695 个可训练参数，比 H2
+增加 40,420。
+
+真实 CUDA 算子前后向和固定四样本门槛均通过。四样本 500 步后的 eval MRE_ALL
+为 4.689 px，AoP 4/4 有效；四张本地叠加图没有发现坐标或通道错位。正式 H3
+在固定 300/100、B2 工程监督、FP32 和 16 轮预算下完整跑完：
+
+| 方案 | selected epoch | PS1 | PS2 | FH1 | MRE_ALL | AoP MAE |
+|---|---:|---:|---:|---:|---:|---:|
+| H1 共享头 | 3 | 22.483 | 27.854 | 46.837 | 32.391 px | 12.130° |
+| H2 独立头 | 3 | 17.564 | 24.193 | 51.797 | 31.185 px | 13.563° |
+| H3 专业增强 | 14 | 12.426 | 21.446 | 40.831 | 24.901 px | 10.289° |
+
+selected best 上 H3 的五项指标都低于 H1/H2，但逐轮结果并不一致：epoch 3 的
+PS2 或 FH1 对照仍有混合变化，epoch 16 的 AoP 又比 H1/H2 高约 0.35°，训练曲线
+也有明显波动。因此这里只能说当前单 seed、16 轮 validation 结果支持继续研究，
+不能声称稳定胜出。DeformConv2d CUDA backward 在锁定环境中没有严格确定性实现；
+本轮固定 seed 与数据顺序并启用 deterministic warn-only，不作位级复现承诺。
+
+详细过程见 [Phase 1C 小结](reports/phase1c/PHASE1C_SUMMARY.md)、
+[专业模块结构](reports/phase1c/SPECIALIZED_ARCHITECTURE.md)、
+[H1/H2/H3 逐点对照](reports/phase1c/SPECIALIZED_COMPARISON.md)、
+[无标签接入状态](reports/phase1c/UNLABELED_INTAKE.md)和
+[validation 曲线](reports/phase1c/curves/validation_metrics.png)。H3 仍是使用 B2
+损失的增强监督工程参照，不是导师原文的纯 MSE，也没有实现 EMA、伪标签或
+无标签一致性损失。
+
 ## 数据现状
 
 当前可核验的监督部分是官方公开划分：
@@ -118,7 +202,7 @@ best，但 epoch 200 的两项主指标反而略差于 B1，因此 JS 在这次�
 - [reports/phase0/dataset_statistics.json](reports/phase0/dataset_statistics.json)
 - [reports/phase0/duplicate_report.csv](reports/phase0/duplicate_report.csv)
 
-无标签数据和分组元数据的需求见 [reports/phase0/DATA_REQUIRED.md](reports/phase0/DATA_REQUIRED.md)。
+无标签数据和分组元数据的基础需求见 [reports/phase0/DATA_REQUIRED.md](reports/phase0/DATA_REQUIRED.md)，当前接入核验见 [reports/phase1c/UNLABELED_INTAKE.md](reports/phase1c/UNLABELED_INTAKE.md)。
 
 ## 当前监督结果
 
@@ -149,11 +233,7 @@ $env:PYTHONPATH = "src"
 python -m pytest -q -p no:cacheprovider
 ```
 
-最新完整测试结果：
-
-```text
-94 passed
-```
+测试数量会随阶段增加，以本地 `pytest` 与 GitHub Actions 的当次输出为准。
 
 ## 当前边界
 
