@@ -20,6 +20,7 @@ from geoequi_ld.training.phase1c_runners import (
     _require_current_ledger_binding,
     _runtime_source_binding,
     _seed_phase1c,
+    _tiny_gradient_evidence,
     build_phase1c_initialization,
     require_phase1c_fresh_output,
 )
@@ -84,6 +85,48 @@ def test_runtime_source_binding_handles_clean_git_diff_as_text() -> None:
     assert binding["git_head"] != "unavailable"
     assert binding["tracked_source_diff_size_bytes"] >= 0
     assert len(binding["tracked_source_diff_sha256"]) == 64
+
+
+def _assign_unit_gradients(module: nn.Module) -> None:
+    for parameter in module.parameters():
+        parameter.grad = torch.ones_like(parameter)
+
+
+def test_tiny_gradient_gate_allows_unused_backbone_parameter_only() -> None:
+    backbone = nn.Module()
+    backbone.used = nn.Parameter(torch.ones(1))
+    backbone.unused = nn.Parameter(torch.ones(1))
+    backbone.used.grad = torch.ones_like(backbone.used)
+    ps_enhancer = nn.Module()
+    ps_enhancer.offset_mask = nn.Conv2d(1, 27, kernel_size=1)
+    ps_enhancer.deform = nn.Conv2d(1, 1, kernel_size=1)
+    ps_enhancer.other = nn.Linear(1, 1)
+    ps_decoder = nn.Linear(1, 1)
+    fh_enhancer = nn.Linear(1, 1)
+    fh_decoder = nn.Linear(1, 1)
+    for module in (ps_enhancer, ps_decoder, fh_enhancer, fh_decoder):
+        _assign_unit_gradients(module)
+    model = SimpleNamespace(
+        backbone=backbone,
+        ps_enhancer=ps_enhancer,
+        ps_decoder=ps_decoder,
+        fh_enhancer=fh_enhancer,
+        fh_decoder=fh_decoder,
+    )
+
+    evidence = _tiny_gradient_evidence(model)  # type: ignore[arg-type]
+
+    assert evidence["all_dedicated_parameter_gradients_present"] is True
+    assert evidence["all_required_gradients_finite"] is True
+    assert evidence["all_required_nonzero"] is True
+    assert evidence["module_gradient_audits"]["backbone"][
+        "gradient_tensors_missing"
+    ] == 1
+
+    ps_enhancer.other.bias.grad = None
+    failed = _tiny_gradient_evidence(model)  # type: ignore[arg-type]
+    assert failed["all_dedicated_parameter_gradients_present"] is False
+    assert failed["all_required_nonzero"] is False
 
 
 def _metrics(value: float) -> dict[str, Any]:

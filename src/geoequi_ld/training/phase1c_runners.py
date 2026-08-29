@@ -451,6 +451,20 @@ def _all_parameter_gradients_finite(module: nn.Module) -> bool:
     )
 
 
+def _module_gradient_audit(module: nn.Module) -> dict[str, Any]:
+    parameters = [parameter for parameter in module.parameters() if parameter.requires_grad]
+    present = [parameter.grad for parameter in parameters if parameter.grad is not None]
+    return {
+        "trainable_parameter_tensors": len(parameters),
+        "gradient_tensors_present": len(present),
+        "gradient_tensors_missing": len(parameters) - len(present),
+        "all_parameter_gradients_present": bool(parameters)
+        and len(present) == len(parameters),
+        "all_present_gradients_finite": bool(present)
+        and all(bool(torch.isfinite(gradient).all()) for gradient in present),
+    }
+
+
 def _predictor_gradient_evidence(enhancer: PSFeatureEnhancer) -> dict[str, float]:
     gradient = enhancer.offset_mask.weight.grad
     bias_gradient = enhancer.offset_mask.bias.grad
@@ -734,6 +748,13 @@ def _structure_probe(
 
 def _tiny_gradient_evidence(model: HRNetW32SpecializedHeatmap) -> dict[str, Any]:
     predictor = _predictor_gradient_evidence(model.ps_enhancer)
+    module_audits = {
+        "backbone": _module_gradient_audit(model.backbone),
+        "ps_enhancer": _module_gradient_audit(model.ps_enhancer),
+        "ps_decoder": _module_gradient_audit(model.ps_decoder),
+        "fh_enhancer": _module_gradient_audit(model.fh_enhancer),
+        "fh_decoder": _module_gradient_audit(model.fh_decoder),
+    }
     evidence = {
         "backbone_gradient_l1": _gradient_sum(model.backbone),
         "ps_offset_predictor_gradient_l1": predictor["offset"],
@@ -745,21 +766,43 @@ def _tiny_gradient_evidence(model: HRNetW32SpecializedHeatmap) -> dict[str, Any]
         "ps_decoder_gradient_l1": _gradient_sum(model.ps_decoder),
         "fh_enhancer_gradient_l1": _gradient_sum(model.fh_enhancer),
         "fh_decoder_gradient_l1": _gradient_sum(model.fh_decoder),
+        "module_gradient_audits": module_audits,
     }
-    evidence["all_required_gradients_finite"] = all(
-        _all_parameter_gradients_finite(module)
-        for module in (
-            model.backbone,
-            model.ps_enhancer,
-            model.ps_decoder,
-            model.fh_enhancer,
-            model.fh_decoder,
+    dedicated_names = (
+        "ps_enhancer",
+        "ps_decoder",
+        "fh_enhancer",
+        "fh_decoder",
+    )
+    evidence["all_dedicated_parameter_gradients_present"] = all(
+        module_audits[name]["all_parameter_gradients_present"]
+        for name in dedicated_names
+    )
+    evidence["all_required_gradients_finite"] = bool(
+        module_audits["backbone"]["gradient_tensors_present"] > 0
+        and module_audits["backbone"]["all_present_gradients_finite"]
+        and all(
+            module_audits[name]["all_present_gradients_finite"]
+            for name in dedicated_names
         )
     )
-    numeric = [value for value in evidence.values() if isinstance(value, int | float)]
+    gradient_names = (
+        "backbone_gradient_l1",
+        "ps_offset_predictor_gradient_l1",
+        "ps_mask_predictor_gradient_l1",
+        "ps_deform_weight_gradient_l1",
+        "ps_enhancer_gradient_l1",
+        "ps_decoder_gradient_l1",
+        "fh_enhancer_gradient_l1",
+        "fh_decoder_gradient_l1",
+    )
     evidence["all_required_nonzero"] = bool(
-        evidence["all_required_gradients_finite"]
-        and all(math.isfinite(float(value)) and float(value) > 0 for value in numeric)
+        evidence["all_dedicated_parameter_gradients_present"]
+        and evidence["all_required_gradients_finite"]
+        and all(
+            math.isfinite(float(evidence[name])) and float(evidence[name]) > 0
+            for name in gradient_names
+        )
     )
     return evidence
 
