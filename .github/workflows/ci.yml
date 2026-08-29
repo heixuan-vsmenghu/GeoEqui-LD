@@ -40,3 +40,13 @@ jobs:
           python scripts/run_phase1a_tiny_gate.py --help
           python scripts/train_phase1a_hrnet.py --help
           python scripts/summarize_phase1a.py --help
+          python scripts/diagnose_phase1b_bn.py --help
+          python scripts/verify_phase1b_h1_replay.py --help
+          python scripts/run_phase1b_split_tiny.py --help
+          python scripts/review_phase1b_split_tiny.py --help
+          python scripts/train_phase1b_split.py --help
+          python scripts/summarize_phase1b.py --help
+          python scripts/probe_phase1c_deform.py --help
+          python scripts/run_phase1c_tiny.py --help
+          python scripts/review_phase1c_tiny.py --help
+          python scripts/train_phase1c_specialized.py --help
