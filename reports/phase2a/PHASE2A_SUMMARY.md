@@ -10,4 +10,4 @@
 
 H3 接线中的几何损失值只用于证明接口和梯度路径可运行。它不使用新增无标签池，不是半监督训练，也没有产生新的 validation/testing 成绩。本轮没有实现 EMA、伪标签、置信度筛选或完整半监督损失。
 
-详细数据证据见 [DATA_INTAKE.md](DATA_INTAKE.md)，数学和测试口径见 [GEOMETRY_CONTRACT.md](GEOMETRY_CONTRACT.md)，脱敏机器结果见 [aggregate_results.json](aggregate_results.json)。给导师的短说明保存在 [ADVISOR_UPDATE_DRAFT.md](ADVISOR_UPDATE_DRAFT.md)，没有自动发送。
+详细数据证据见 [DATA_INTAKE.md](DATA_INTAKE.md)，数学和测试口径见 [GEOMETRY_CONTRACT.md](GEOMETRY_CONTRACT.md)，脱敏机器结果见 [aggregate_results.json](aggregate_results.json)。通信草稿已在导师查阅分支中移出技术入口并保存在本地 Git 忽略目录；历史提交仍保留原记录，也没有自动发送。
