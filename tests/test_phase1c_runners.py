@@ -18,6 +18,7 @@ from geoequi_ld.training.phase1c_runners import (
     _metric_with_rates,
     _operator_evidence_passed,
     _require_current_ledger_binding,
+    _runtime_source_binding,
     _seed_phase1c,
     build_phase1c_initialization,
     require_phase1c_fresh_output,
@@ -75,6 +76,14 @@ def test_operator_evidence_requires_real_deform_and_complete_gradients() -> None
     ):
         drifted = {**evidence, name: replacement}
         assert not _operator_evidence_passed(drifted)
+
+
+def test_runtime_source_binding_handles_clean_git_diff_as_text() -> None:
+    binding = _runtime_source_binding(ROOT)
+
+    assert binding["git_head"] != "unavailable"
+    assert binding["tracked_source_diff_size_bytes"] >= 0
+    assert len(binding["tracked_source_diff_sha256"]) == 64
 
 
 def _metrics(value: float) -> dict[str, Any]:

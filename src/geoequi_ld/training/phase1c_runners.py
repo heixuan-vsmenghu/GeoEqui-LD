@@ -323,6 +323,7 @@ def _runtime_source_binding(repository_root: str | Path) -> dict[str, Any]:
             cwd=root,
             check=True,
             capture_output=True,
+            text=True,
         ).stdout
     except (OSError, subprocess.CalledProcessError):
         head, diff = "unavailable", "unavailable"
