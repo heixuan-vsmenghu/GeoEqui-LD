@@ -91,6 +91,9 @@ def test_tracked_text_does_not_contain_machine_paths() -> None:
     windows_drive = re.compile(r"(?<![A-Za-z0-9])[A-Za-z]:[\\/]")
     for relative in _tracked_files():
         path = root / relative
+        # ``git ls-files`` also returns gitlinks for pinned submodules.
+        if not path.is_file():
+            continue
         if path.suffix.lower() in {".png", ".jpg", ".jpeg", ".gif", ".pdf"}:
             assert relative in PUBLIC_BINARY_ALLOWLIST, f"Unexpected public binary: {relative}"
             continue

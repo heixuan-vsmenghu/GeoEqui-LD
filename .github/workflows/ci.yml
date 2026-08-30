@@ -53,3 +53,5 @@ jobs:
           python scripts/summarize_phase1c.py --help
           python scripts/audit_phase2a_unlabeled.py --help
           python scripts/check_phase2a_h3_geometry.py --help
+          python scripts/evaluate_official_t10.py --help
+          python scripts/generate_baseline_one_page_pdf.py --help

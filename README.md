@@ -2,6 +2,8 @@
 
 这是一个产时超声三关键点检测的毕业设计工程。本项目依据老师提供的研究方案开展，代码实现、接口适配和实验整理使用了 AI 工具辅助，具体方案来源和实现差异见[来源说明](docs/ATTRIBUTION_AND_RELEASE_SCOPE.md)。
 
+当前分支先按导师要求复现 IUGC 2025 官方 `UNet Heatmap / T10` baseline。官方代码来源、固定 commit、Kaggle 数据和实际结果统一记录在[官方 baseline 复现报告](reports/baseline_reproduction/BASELINE_REPRODUCTION.md)。下面的 H1/H2/H3 与损失对照是此前探索记录，不是官方 baseline，本轮已暂停。
+
 项目最终希望研究几何等变一致性能否帮助模型利用无标签图像。目前监督模型和几何一致性计算接口已经实现，但真实无标签数据上的半监督训练还没有开始。
 
 仓库当前为私有协作状态。它此前曾公开过，改为 private 不能收回已经下载或复制的历史内容；后续代码、权重和数据衍生物的公开范围仍需确认。详细说明见[来源与发布范围](docs/ATTRIBUTION_AND_RELEASE_SCOPE.md)。
