@@ -26,6 +26,7 @@ DEFAULT_OUTPUT_DIR = REPOSITORY_ROOT / "runs" / "baseline_reproduction" / "valid
 LANDMARK_NAMES = ("PS1", "PS2", "FH1")
 INPUT_SIZE = 512
 HEATMAP_SIZE = 64
+INVALID_AOP_PENALTY_DEG = 180.0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -255,7 +256,7 @@ def summarize_validation_metrics(
     prediction: np.ndarray,
     target: np.ndarray,
     target_aop: np.ndarray,
-) -> tuple[dict[str, float | int], np.ndarray, np.ndarray]:
+) -> tuple[dict[str, float | int | None], np.ndarray, np.ndarray]:
     pred = np.asarray(prediction, dtype=np.float64)
     truth = np.asarray(target, dtype=np.float64)
     official_aop = np.asarray(target_aop, dtype=np.float64)
@@ -268,20 +269,33 @@ def summarize_validation_metrics(
 
     radial_errors = np.linalg.norm(pred - truth, axis=2)
     predicted_aop, valid_aop = aop_degrees(pred)
-    if not bool(valid_aop.all()):
-        invalid_count = int((~valid_aop).sum())
-        raise ValueError(
-            f"AoP is undefined for {invalid_count} prediction(s); refusing a partial mean"
-        )
     aop_absolute_errors = np.abs(predicted_aop - official_aop)
+    valid_aop_errors = aop_absolute_errors[valid_aop]
+    penalized_aop_errors = np.where(
+        valid_aop,
+        aop_absolute_errors,
+        INVALID_AOP_PENALTY_DEG,
+    )
     point_means = radial_errors.mean(axis=0)
-    metrics: dict[str, float | int] = {
-        "n_images": int(pred.shape[0]),
+    n_images = int(pred.shape[0])
+    n_valid_aop = int(valid_aop.sum())
+    invalid_aop_count = int((~valid_aop).sum())
+    metrics: dict[str, float | int | None] = {
+        "n_images": n_images,
         "MRE_PS1": float(point_means[0]),
         "MRE_PS2": float(point_means[1]),
         "MRE_FH1": float(point_means[2]),
         "MRE_ALL": float(radial_errors.mean()),
-        "AoP_absolute_error_deg": float(aop_absolute_errors.mean()),
+        "AoP_absolute_error_deg": float(penalized_aop_errors.mean()),
+        "n_evaluable_aop": n_images,
+        "n_valid_aop": n_valid_aop,
+        "aop_invalid_prediction_count": invalid_aop_count,
+        "aop_valid_ratio": n_valid_aop / n_images,
+        "aop_invalid_prediction_ratio": invalid_aop_count / n_images,
+        "aop_mae_valid_deg": (
+            float(valid_aop_errors.mean()) if valid_aop_errors.size else None
+        ),
+        "aop_invalid_penalty_deg": INVALID_AOP_PENALTY_DEG,
     }
     return metrics, radial_errors, predicted_aop
 
@@ -315,6 +329,11 @@ def _save_overlay(
 
     with Image.open(image_path) as source:
         image = source.convert("RGB")
+    predicted_aop_text = (
+        f"{predicted_aop:.2f}°"
+        if np.isfinite(predicted_aop)
+        else f"undefined ({INVALID_AOP_PENALTY_DEG:.0f}° penalty)"
+    )
     figure, axis = plt.subplots(figsize=(7, 7), dpi=150)
     axis.imshow(image)
     colors = ("#ff3b30", "#34c759", "#007aff")
@@ -342,7 +361,7 @@ def _save_overlay(
     axis.plot(prediction[[0, 2], 0], prediction[[0, 2], 1], color="#ffd60a")
     axis.set_title(
         f"{case_name} | {filename}\n"
-        f"AoP prediction {predicted_aop:.2f}° | ground truth {target_aop:.2f}°"
+        f"AoP prediction {predicted_aop_text} | ground truth {target_aop:.2f}°"
     )
     axis.axis("off")
     axis.legend(loc="lower center", ncol=3, fontsize=7, framealpha=0.8)
@@ -378,9 +397,12 @@ def _write_predictions(
     fieldnames.extend(
         [
             "MRE_image",
+            "AoP_prediction_valid",
             "AoP_prediction_deg",
             "AoP_ground_truth_deg",
             "AoP_absolute_error_deg",
+            "AoP_penalty_applied",
+            "AoP_score_contribution_deg",
         ]
     )
     with path.open("w", newline="", encoding="utf-8-sig") as handle:
@@ -394,10 +416,22 @@ def _write_predictions(
                 row[f"{name}_x_gt"] = float(targets[index, point_index, 0])
                 row[f"{name}_y_gt"] = float(targets[index, point_index, 1])
             row["MRE_image"] = float(radial_errors[index].mean())
-            row["AoP_prediction_deg"] = float(predicted_aop[index])
+            aop_valid = bool(np.isfinite(predicted_aop[index]))
+            row["AoP_prediction_valid"] = str(aop_valid).lower()
+            row["AoP_prediction_deg"] = (
+                float(predicted_aop[index]) if aop_valid else ""
+            )
             row["AoP_ground_truth_deg"] = float(target_aop[index])
-            row["AoP_absolute_error_deg"] = float(
+            row["AoP_absolute_error_deg"] = (
+                float(abs(predicted_aop[index] - target_aop[index]))
+                if aop_valid
+                else ""
+            )
+            row["AoP_penalty_applied"] = str(not aop_valid).lower()
+            row["AoP_score_contribution_deg"] = float(
                 abs(predicted_aop[index] - target_aop[index])
+                if aop_valid
+                else INVALID_AOP_PENALTY_DEG
             )
             writer.writerow(row)
 
@@ -455,6 +489,10 @@ def main(argv: list[str] | None = None) -> int:
         "input_size": [INPUT_SIZE, INPUT_SIZE],
         "heatmap_size": [HEATMAP_SIZE, HEATMAP_SIZE],
         "decoder": "per-channel hard argmax; heatmap x/y multiplied by 8",
+        "aop_scoring": (
+            "valid predictions use absolute angle error; degenerate predictions "
+            "contribute the repository's conservative 180-degree penalty"
+        ),
         **metrics,
     }
 

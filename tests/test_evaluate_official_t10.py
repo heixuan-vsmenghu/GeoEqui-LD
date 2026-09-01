@@ -51,6 +51,38 @@ def test_summary_uses_official_aop_csv_values_as_ground_truth() -> None:
     assert metrics["MRE_FH1"] == pytest.approx(0.0)
     assert metrics["MRE_ALL"] == pytest.approx(0.0)
     assert metrics["AoP_absolute_error_deg"] == pytest.approx(7.5)
+    assert metrics["aop_mae_valid_deg"] == pytest.approx(7.5)
+    assert metrics["n_evaluable_aop"] == 2
+    assert metrics["n_valid_aop"] == 2
+    assert metrics["aop_invalid_prediction_count"] == 0
+    assert metrics["aop_valid_ratio"] == pytest.approx(1.0)
+
+
+def test_summary_penalizes_and_counts_degenerate_predicted_aop() -> None:
+    target = np.asarray(
+        [
+            [[0.0, 0.0], [8.0, 0.0], [0.0, 8.0]],
+            [[0.0, 0.0], [8.0, 0.0], [0.0, 8.0]],
+        ]
+    )
+    prediction = target.copy()
+    prediction[1] = 0.0
+
+    metrics, _, predicted_aop = summarize_validation_metrics(
+        prediction,
+        target,
+        np.asarray([90.0, 90.0]),
+    )
+
+    assert predicted_aop[0] == pytest.approx(90.0)
+    assert np.isnan(predicted_aop[1])
+    assert metrics["n_valid_aop"] == 1
+    assert metrics["aop_invalid_prediction_count"] == 1
+    assert metrics["aop_valid_ratio"] == pytest.approx(0.5)
+    assert metrics["aop_invalid_prediction_ratio"] == pytest.approx(0.5)
+    assert metrics["aop_mae_valid_deg"] == pytest.approx(0.0)
+    assert metrics["AoP_absolute_error_deg"] == pytest.approx(90.0)
+    assert metrics["aop_invalid_penalty_deg"] == pytest.approx(180.0)
 
 
 def _write_fake_official_model(code_dir: Path, heatmaps: torch.Tensor) -> Path:

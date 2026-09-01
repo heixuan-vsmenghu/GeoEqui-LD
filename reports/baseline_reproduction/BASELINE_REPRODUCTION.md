@@ -1,6 +1,6 @@
 # IUGC 2025 官方 UNet Heatmap baseline 复现
 
-> 状态：正式训练进行中。本文只记录官方 T10 baseline，不把仓库中早期的小型 U-Net、H1/H2/H3 或损失消融混入本次结果。
+> 状态：正式训练与冻结评价均已完成。本文只记录官方 T10 baseline，不把仓库中早期的小型 U-Net、H1/H2/H3 或损失消融混入本次结果。
 
 ## 1. 官方来源与 commit
 
@@ -53,9 +53,11 @@
 
 ## 5. 训练是否完成
 
-用当前 Kaggle 解压数据完成了一次真实样本 smoke test：数据读取、前向、反向、Adam 更新及 checkpoint 保存均成功，loss 为有限值。150 轮正式训练正在运行。
+已完成 150/150 轮正式训练。日志中的 epoch 连续为 1—150，完整一轮均为 75 个 batch；纯训练进度合计约 41.41 小时，端到端墙钟时间约 42 小时 20 分。单轮平均约 16 分 34 秒，最慢一轮 18 分 38 秒，均低于预先规定的 20 分钟速度上限。日志中没有 traceback、NaN 或 Inf。
 
-官方仓库没有提供 validation checkpoint 选择规则，只保存训练 loss 最优、训练坐标距离最优、每 50 轮和最终模型。为避免看过 validation 或 testing 后再挑模型，本次在评价前固定使用 `final_model.pth`（epoch 150）作为正式复现 checkpoint。
+官方仓库没有提供 validation checkpoint 选择规则，只保存训练 loss 最优、训练坐标距离最优、每 50 轮和最终模型。为避免看过 validation 或 testing 后再挑模型，本次在评价前固定使用 `final_model.pth`（epoch 150）作为正式复现 checkpoint。它与 `model_epoch_150.pth` 字节完全一致，SHA-256 为 `FC1C5CDAE752EE5E1A1BE5980885209E03C12B06A40AF7C2561A7A6046CCEE44`。
+
+评价顺序也在打开 testing 前冻结：先完整评价 100 张 validation，再对 501 张 testing 只运行一次。testing 的一次性本地锁和逐样本输出均保留在忽略目录中，不进入 Git。
 
 ## 6. 官方报告指标
 
@@ -70,16 +72,34 @@
 
 ## 7. 本次复现指标
 
-待正式训练完成后填写。
+| 划分 | MRE_PS1 | MRE_PS2 | MRE_FH1 | MRE_ALL | AoP absolute error |
+|---|---:|---:|---:|---:|---:|
+| Validation | 11.4266 | 22.8057 | 60.6077 | 31.6133 | 15.7964° |
+| Testing | 10.6306 | 15.7768 | 44.7056 | 23.7044 | 10.4706° |
+
+Validation 中有 99/100 个预测可计算 AoP，1 个预测的 PS1 顶点射线退化；99 个有效预测的 AoP MAE 为 14.1377°。Testing 为 501/501 有效。官方论文只给出 AoP 与绝对误差公式，没有规定零长度射线的聚合办法。本次沿用仓库既定的保守口径：无效预测对全 split 分数贡献 180°，同时保留有效样本均值、有效数和无效数。因此表中的 validation `15.7964°` 是保持 100 张分母的保守惩罚分数，不把 99 张的 valid-only 均值冒充完整 validation 指标，也不宣称 180° 是官方规定。
 
 ## 8. 与官方结果的差值
 
-待正式训练完成后填写。
+下表为“本次复现值 − 官方报告值”；正数表示误差更大，负数表示误差更小。
+
+| 划分 | ΔMRE_PS1 | ΔMRE_PS2 | ΔMRE_FH1 | ΔMRE_ALL | ΔAoP absolute error |
+|---|---:|---:|---:|---:|---:|
+| Validation | -0.9142 | +1.2674 | +12.4270 | +4.2633 | +5.3264° |
+| Testing | -0.0414 | +0.1534 | +5.5190 | +1.8744 | +2.1006° |
+
+PS1 已接近或略低于官方表值，但总体 MRE 与 AoP 均未追上，差距主要集中在 FH1。**运行链路已复现，数值尚未复现。**
 
 ## 9. 当前能确认的差异来源
 
-待数值结果出来后，只保留 3—5 个最具体、能由运行证据支持的原因。
+1. 官方材料没有说明表 2 使用 final、训练 loss best、训练坐标 best 或其他 validation 选择 checkpoint；本次为避免事后挑选，预先固定 epoch 150 final。
+2. Validation 出现 1 个 argmax 后的退化 AoP；论文没有给出这种情况的计分规则。本次 180° 是仓库既定的保守惩罚，不是从官方材料补造的规则。
+3. 数值差距集中在 FH1：validation 与 testing 分别比官方高 12.4270 px 和 5.5190 px；PS1 基本追平，说明不是三个通道等幅偏移。
+4. 论文使用 RTX 2080 Ti；本次是 Windows/WDDM 下的 GTX 1650 4 GB，PyTorch/CUDA 版本也未由官方完整冻结。它们不改变配置，但单次随机训练的数值路径不能假定逐位一致。
+5. 当前 Kaggle 包的 train/validation/testing 数量与任务划分吻合，但上游没有发布可用于逐文件比对的 split 指纹，因此无法证明数据字节与论文运行时版本完全相同。
 
 ## 10. 下一步
 
-完成 150 轮训练后，用预先固定的 epoch 150 checkpoint 评价 validation；随后对 testing 只评价一次，生成好、中、差三例本地可视化和一页导师汇报 PDF。真实医学图像、逐样本预测和 checkpoint 只保存在本地 `runs/`，不提交公开仓库。
+本轮 baseline 已关闭：epoch 150 checkpoint、validation/testing 聚合指标、逐样本预测、好/中/差三例可视化以及单页导师 PDF 均已在本地生成。真实医学图像、checkpoint、逐样本预测、三例图和包含真实图像的 PDF 只保存在忽略目录，不提交公开仓库。
+
+后续 HRNet 与半监督研究作为独立阶段开展，不回写或改造本次官方 T10 baseline 的模型、损失、解码和结果口径。
