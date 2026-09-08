@@ -1,4 +1,12 @@
-"""Differentiable spatial-to-numerical transform (DSNT)."""
+"""Differentiable spatial-to-numerical transform (DSNT).
+
+Version scope: the DSNT class below is the historical Phase 0 implementation
+with default temperature=0.05. Its signatures and numerical behavior are kept
+for existing experiments. The current strict core implementation uses
+models/strict.py:StandardDSNT and an ordinary spatial softmax, reusing only
+spatial_expectation from this module, not the temperature-scaled DSNT class.
+See this directory's README.md and docs/CURRENT_PROGRESS.md for the version map.
+"""
 
 from __future__ import annotations
 

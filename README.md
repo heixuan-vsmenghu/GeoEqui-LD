@@ -9,9 +9,11 @@
 - 官方 IUGC 2025 `UNet Heatmap / T10` 的训练与冻结评价已完成，但论文数值尚未完全复现。
 - strict GeoEqui-LD 已完成总计 200 轮纯监督预热。选中 epoch 39 的 raw-BN、hard-argmax validation MRE_ALL 为 **31.059 px**；完成轮数不等于稳定收敛。
 - 同一 checkpoint、同一 validation 的普通 Softmax DSNT MRE_ALL 为 **153.767 px**，与 argmax 的差距仍未解决。已有 Stage 2 短试跑出现退化，尚未证明半监督联合训练有效。
-- 本次公开更新为阶段结果摘要和查阅文档；近期 strict 源码、完整运行报告与模型权重仍保留在本地，未随本文发布。`main` 中现有代码属于早期探索版本，不代表当前 strict 完整实现。
+- 仓库已接入当前 [strict 模型与普通 Softmax DSNT](src/geoequi_ld/models/strict.py)、[严格热图 MSE](src/geoequi_ld/training/strict_losses.py)及其 HRNet/PS-FH 依赖，配有离线合成测试。长训练启动器、完整运行报告和权重仍未公开；核心源码集成不等于整套实验已经可独立复现。
 
-建议先看[导师查阅索引](docs/ADVISOR_REVIEW_INDEX.md)，再看[当前结果与实现说明](docs/CURRENT_PROGRESS.md)。
+目前需要核对的是高斯热图 MSE 监督与普通 Softmax DSNT 之间的数值约定。
+
+主要入口：[监督训练结果](reports/review_20260908/SUPERVISED_RESULTS.md)、[当前核心源码](src/geoequi_ld/models/README.md)、[热图与 DSNT 核对](reports/review_20260908/HEATMAP_DSNT_CHECK.md)、[导师查阅索引](docs/ADVISOR_REVIEW_INDEX.md)。结果摘自已有记录，本次源码整理没有新增实验。
 
 ## 任务与模型
 
@@ -30,22 +32,21 @@ strict 实现采用单通道 `512×512` 输入、HRNet-W32、PS/FH 专业增强�
 
 T10 的 final 是评价前固定的，strict selected 则由 validation 选出；T10 的 validation AoP 还对 1 个退化预测作 180° 惩罚，strict 报告另记数值可计算数量。这不是同协议的优劣或因果比较。31.059 px 不是 Testing 成绩、DSNT 成绩或最终半监督成绩。完整同轮指标和局限见[当前结果](docs/CURRENT_PROGRESS.md)及[官方 T10 复现报告](https://github.com/heixuan-vsmenghu/GeoEqui-LD/blob/e3af9e2a2c29e5de3beab912fe1ecf7592300f8b/reports/baseline_reproduction/BASELINE_REPRODUCTION.md)。
 
-早期 U-Net、H1/H2/H3、辅助损失、BN 和 DSNT 对照保留为[历史探索记录](docs/history/RESEARCH_INDEX.md)，与当前方法配置分开记录，负结果仍可追溯。
+## 当前源码与产物范围
 
-## 本地代码与产物
+当前可核读的核心是 [strict.py](src/geoequi_ld/models/strict.py)、[hrnet.py](src/geoequi_ld/models/hrnet.py)、[specialized.py](src/geoequi_ld/models/specialized.py) 和 [strict_losses.py](src/geoequi_ld/training/strict_losses.py)。这些代码取自当前真实工作区，计算保持原样；这次源码集成记录当前版本，不补造历史运行源码版本。实际设置来源见[配置说明](configs/README.md)。
 
-以下是本地未提交实现的相对路径，不是已发布的网页链接：
+以下仍仅在本地，纯路径不是线上源码链接：`src/geoequi_ld/training/strict_runner.py`、`scripts/run_strict_stage1_200e.py`、`scripts/run_strict_stage2_original_5e.py`。它们是已有训练与评价入口，不包含在本次核心源码集成中。
 
-- `src/geoequi_ld/models/strict.py`：strict 模型及普通 Softmax DSNT。
-- `src/geoequi_ld/training/strict_losses.py`：监督和伪标签热图 MSE。
-- `src/geoequi_ld/training/strict_runner.py`：训练与评价流程。
-- `scripts/run_strict_stage1_200e.py`、`scripts/run_strict_stage2_original_5e.py`：已有实验入口。
+项目声明的 Python 版本范围为 3.10–3.12，这不是某次运行的实际解释器版本；当前依赖见 [pyproject.toml](pyproject.toml)，[基线版本依赖](https://github.com/heixuan-vsmenghu/GeoEqui-LD/blob/e3af9e2a2c29e5de3beab912fe1ecf7592300f8b/pyproject.toml)另作追溯。数据位置以 `DATA_ROOT` 表示，运行输出以 `RUN_DIR` 表示；权重、医学图像、逐样本记录和私人材料另行保存，不随本次更新提供。
 
-本地运行记录采用的项目 Python 版本范围为 3.10–3.12；已公开基线版本的依赖声明见 [pyproject.toml](https://github.com/heixuan-vsmenghu/GeoEqui-LD/blob/e3af9e2a2c29e5de3beab912fe1ecf7592300f8b/pyproject.toml)。数据位置以 `DATA_ROOT` 表示，运行输出以 `RUN_DIR` 表示；权重、医学图像、逐样本记录和私人材料另行保存，不随本次文档更新提供。
+## 历史追溯
+
+早期 U-Net、H1/H2/H3、辅助损失、BN 和 DSNT 对照集中在[历史研究索引](docs/history/RESEARCH_INDEX.md)，与当前方法配置分开，负结果仍可追溯。旧配置和旧 DSNT 参数未改动，不代表当前 strict 运行采用了它们。
 
 ## 查阅与发布范围
 
-2026-09-08，本次查阅文档更新发布于公开仓库的默认分支 `main`。官方 T10 与历史探索记录链接到既有公开版本的固定提交；近期 strict 结果在本文中作聚合摘录，完整实现和原始记录仍在本地。
+2026-09-08，在已审阅查阅文档的基础上，仓库补充当前核心源码、必要依赖与测试、目录说明和结果摘录。官方 T10 与历史探索记录链接到既有公开版本的固定提交；完整训练运行系统和原始记录仍在本地。
 
 研究使用、向导师私下提供材料和公开发布的范围分别说明，见[来源与发布范围](docs/ATTRIBUTION_AND_RELEASE_SCOPE.md)。
 

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "geoequi-ld"
 version = "0.1.0"
-description = "Phase 0 reference implementation for geometry-equivariant semi-supervised intrapartum ultrasound landmark detection"
+description = "Strict model core and research records for geometry-equivariant intrapartum ultrasound landmark detection"
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 license = { file = "LICENSE" }
@@ -16,6 +16,9 @@ dependencies = [
   "pandas==2.2.3",
   "Pillow==11.1.0",
   "PyYAML==6.0.3",
+  "huggingface-hub==0.36.2",
+  "safetensors==0.6.2",
+  "timm==1.0.28",
   "torch==2.5.1",
   "torchvision==0.20.1",
   "tqdm==4.67.1",

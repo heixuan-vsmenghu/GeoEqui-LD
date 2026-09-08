@@ -1,6 +1,8 @@
 # 当前结果与实现说明
 
-更新于 2026-09-08。本文为公开的阶段结果摘要，依据已保存的本地实验报告和实现记录整理，未重新运行实验；完整 strict 源码与原始记录尚未随本文发布。
+更新于 2026-09-08。本文为公开的阶段结果摘要，依据已保存的本地实验报告和实现记录整理，未重新运行实验；完整训练运行系统与原始记录尚未随本文发布。
+
+本次在已发布摘要基础上接入[当前核心源码](../src/geoequi_ld/models/README.md)，并补充[监督结果摘录](../reports/review_20260908/SUPERVISED_RESULTS.md)和[热图与 DSNT 核对](../reports/review_20260908/HEATMAP_DSNT_CHECK.md)。当前核心可导入核读，但不代表完整训练运行系统已经公开。
 
 ## 官方 T10 与 Stage 1
 
@@ -40,6 +42,16 @@ FH1 是 selected 同轮三个点中最大的误差来源。final 明显差于 se
 **监督续训波动与同一 checkpoint 的 DSNT 读出失准需要分开判断。** 现有对照尚不能确定续训退步的唯一原因；DSNT 读出差异在继续训练前已存在。目前训练暂停，保留已有状态与记录。
 
 来源均为本地未提交报告：`reports/strict_model_stage2/STRICT_STAGE2_ORIGINAL_5E.md`、`reports/strict_model_stage2/STAGE2_COLLAPSE_ATTRIBUTION.md`、`reports/strict_model_stage2/STAGE2_25STEP_PAIRED_CONTROLS.md`，以及 `reports/strict_model_stage1/STAGE1_NATIVE_RESUME_25STEP.md`。
+
+## 读出版本与实际调用
+
+当前 strict 使用 [strict.py](../src/geoequi_ld/models/strict.py)：`StandardDSNT.forward` → `standard_spatial_softmax` → `F.softmax`，再调用 `models/dsnt.py` 的 `spatial_expectation`。Softmax 前没有除以 temperature；复用期望函数不等于实例化旧 DSNT 类。对应监督归约可直接查看 [strict_losses.py](../src/geoequi_ld/training/strict_losses.py)。
+
+Stage 1 的本地 `scripts/run_strict_stage1_200e.py` 复用 batch2 监督更新及 `training/strict_runner.py` 的只读评价路径；Stage 2 的本地 `scripts/run_strict_stage2_original_5e.py` 经 `run_strict_logical_step` 使用 `StandardDSNT`，无标签诊断也直接实例化它。这里只静态核对当前文件与已保存记录的对应；后续扩展过的文件不冒充历史运行的逐字原件。
+
+既有 [models/dsnt.py](../src/geoequi_ld/models/dsnt.py) 的 `DSNT` 类属于早期探索，默认 temperature=0.05；旧 `train_baseline.py`、`train_phase05.py`、`train_phase06.py` 从各自配置传入该温度。底层 `spatial_softmax` 函数自身默认 1.0，与类默认值不同。旧参数和运算保持原样，仅新增版本说明；当前 strict 核心已收录，完整训练运行系统仍未公开。
+
+配置来源见[配置目录说明](../configs/README.md)，源码目录入口见[模型版本说明](../src/geoequi_ld/models/README.md)。历史配置与旧源码用于追溯，不作为当前实现的推荐入口。
 
 ## 实现口径
 
