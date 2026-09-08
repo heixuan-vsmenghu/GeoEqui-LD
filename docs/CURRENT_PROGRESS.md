@@ -32,7 +32,7 @@ FH1 是 selected 同轮三个点中最大的误差来源。final 明显差于 se
 补充短程对照显示，移除几何损失和无标签前向后，单张监督续训仍明显退步。原生 Stage 1 参照直接复用原模型、Adam、数据排列和训练计算，未发现可直接修补的意外接入差异；25 次物理 batch=2 更新后仍出现以下短期变化：
 
 | 更新次数 | 累计训练张次 | raw argmax ALL px | calibrated argmax ALL px |
-|---:|---:|---:|---:|
+|---|---:|---:|---:|
 | 0 | 0 | 31.059 | 29.399 |
 | 10 | 20 | 34.609 | 29.637 |
 | 25 | 50 | 44.503 | 41.520 |
@@ -47,7 +47,7 @@ FH1 是 selected 同轮三个点中最大的误差来源。final 明显差于 se
 
 当前 strict 使用 [strict.py](../src/geoequi_ld/models/strict.py)：`StandardDSNT.forward` → `standard_spatial_softmax` → `F.softmax`，再调用 `models/dsnt.py` 的 `spatial_expectation`。Softmax 前没有除以 temperature；复用期望函数不等于实例化旧 DSNT 类。对应监督归约可直接查看 [strict_losses.py](../src/geoequi_ld/training/strict_losses.py)。
 
-Stage 1 的本地 `scripts/run_strict_stage1_200e.py` 复用 batch2 监督更新及 `training/strict_runner.py` 的只读评价路径；Stage 2 的本地 `scripts/run_strict_stage2_original_5e.py` 经 `run_strict_logical_step` 使用 `StandardDSNT`，无标签诊断也直接实例化它。这里只静态核对当前文件与已保存记录的对应；后续扩展过的文件不冒充历史运行的逐字原件。
+Stage 1 的本地 `scripts/run_strict_stage1_200e.py` 复用 batch2 监督更新，并经 `run_strict_stage1_batch2_stability_30e.py::_evaluate_state_preserving` → `_evaluate_validation` 评价；其中 DSNT 诊断通过 reference 导入的 `standard_spatial_softmax` 与 `spatial_expectation` 直接完成，并非调用 `training/strict_runner.py` 的评价入口。Stage 2 的本地 `scripts/run_strict_stage2_original_5e.py` 经 `run_strict_logical_step` 使用 `StandardDSNT`，无标签诊断也直接实例化它。两条路径均采用普通空间 Softmax 与同一坐标期望函数。这里核对的是当前文件的静态调用关系；不据此声称后续修改过的文件与历史运行源码逐字节相同。
 
 既有 [models/dsnt.py](../src/geoequi_ld/models/dsnt.py) 的 `DSNT` 类属于早期探索，默认 temperature=0.05；旧 `train_baseline.py`、`train_phase05.py`、`train_phase06.py` 从各自配置传入该温度。底层 `spatial_softmax` 函数自身默认 1.0，与类默认值不同。旧参数和运算保持原样，仅新增版本说明；当前 strict 核心已收录，完整训练运行系统仍未公开。
 
