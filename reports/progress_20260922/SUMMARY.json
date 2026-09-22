@@ -1,0 +1,52 @@
+{
+  "as_of": "2026-09-22",
+  "status": "published",
+  "unit": "512-input pixels",
+  "cohort": "Validation100, reused development data",
+  "readout": "ordinary full-map Softmax DSNT",
+  "G_P_710": {
+    "S": 22.507,
+    "S_G": 24.618,
+    "S_P": 22.503,
+    "S_G_P": 24.522,
+    "source": "same source568 and fixed 710-step plan; R0/R1 reused historical records",
+    "not_original_MSE_long_run": true,
+    "fixed_U32_student_geometry_target": {
+      "cohort": "fixed U32, separate from Validation100",
+      "metric": "G on original loss scale, not pixel MRE",
+      "S": 0.166,
+      "S_G": 0.069,
+      "source": "existing 2026-09-11 component aggregate",
+      "same_image_error_correlation": false
+    }
+  },
+  "SAM": {
+    "HIST_NATIVE_mean": 21.853119675431564,
+    "SAM_mean": 20.203948240080926,
+    "difference": -1.649171435350634,
+    "conditional95": [
+      -2.9803064700873247,
+      -0.511746478812085
+    ],
+    "historical_reference": true
+  },
+  "soft_teacher": {
+    "S_mean": 20.24521805481436,
+    "L_mean": 19.99882228379269,
+    "U_mean": 19.882346130046653,
+    "U_minus_S": -0.3628719247677054,
+    "conditional95_U_minus_S": [
+      -0.6644448612218885,
+      -0.0688853461083827
+    ],
+    "U_minus_L_reproduced_descriptive_only": -0.11647615374603636,
+    "original_U_minus_L": -0.11713201136427454,
+    "original_U_minus_L_conditional95": [
+      -0.320230036987033,
+      0.07096153048382281
+    ],
+    "original_interval_not_attached_to_reproduction": true
+  },
+  "new_model_execution": false,
+  "published_on": "2026-09-23"
+}

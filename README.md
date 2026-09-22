@@ -1,6 +1,12 @@
 # GeoEqui-LD
 
-本项目依据导师提供的方案，研究产时超声三关键点检测与产程进展角（AoP）测量。代码实现、接口适配和实验整理使用了 AI 工具辅助，具体来源见[来源说明](docs/ATTRIBUTION_AND_RELEASE_SCOPE.md)。
+本项目研究产时超声三关键点检测与产程进展角（AoP）测量。研究设计与实现来源见[来源说明](docs/ATTRIBUTION_AND_RELEASE_SCOPE.md)。
+
+## 2026-09-22 阶段研究进展
+
+已建立可定位的概率监督基础，并完成监督优化与辅助学习对照：GN8上两个固定种子的SAM均值为20.204 px；同SAM起点续训的U辅助组均值为19.882 px。当前重点是将几何一致性与伪标签的学习信号转化为稳定的定位增益。
+
+[阶段研究进展](reports/progress_20260922/PROGRESS.md)按比较设置说明结果、当前问题和下一步工作。下面保留9月8日的历史记录。
 
 ## 当前进展
 
@@ -13,7 +19,7 @@
 
 目前需要核对的是高斯热图 MSE 监督与普通 Softmax DSNT 之间的数值约定。
 
-主要入口：[监督训练结果](reports/review_20260908/SUPERVISED_RESULTS.md)、[当前核心源码](src/geoequi_ld/models/README.md)、[热图与 DSNT 核对](reports/review_20260908/HEATMAP_DSNT_CHECK.md)、[导师查阅索引](docs/ADVISOR_REVIEW_INDEX.md)。结果摘自已有记录，本次源码整理没有新增实验。
+主要入口：[监督训练结果](reports/review_20260908/SUPERVISED_RESULTS.md)、[当前核心源码](src/geoequi_ld/models/README.md)、[热图与 DSNT 核对](reports/review_20260908/HEATMAP_DSNT_CHECK.md)、[研究查阅索引](docs/ADVISOR_REVIEW_INDEX.md)。结果摘自已有记录，本次源码整理没有新增实验。
 
 ## 任务与模型
 
