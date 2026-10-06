@@ -1,0 +1,263 @@
+{
+  "report_date": "2026-10-06",
+  "result_status": "existing_results_reorganized_no_new_experiment",
+  "split": "Testing",
+  "sample_count": 501,
+  "metric_keys": [
+    "MRE_PSR",
+    "MRE_PSL",
+    "MRE_FHT",
+    "MRE_ALL",
+    "Delta_AoP"
+  ],
+  "metric_display_names": [
+    "MRE_PSR",
+    "MRE_PSL",
+    "MRE_FHT",
+    "MRE_ALL",
+    "ΔAoP"
+  ],
+  "units": {
+    "MRE": "original_image_pixels",
+    "Delta_AoP": "degrees"
+  },
+  "display_precision": 3,
+  "precision_note": "原已归档表格三位小数，不是新增逐例评价或全精度恢复。",
+  "rows": [
+    {
+      "id": "geo_v2_full",
+      "group": "model",
+      "name": "GeoEqui-LD V2（完整流程）",
+      "metrics": {
+        "MRE_PSR": "9.182",
+        "MRE_PSL": "10.108",
+        "MRE_FHT": "26.881",
+        "MRE_ALL": "15.390",
+        "Delta_AoP": "6.955"
+      },
+      "source_description": "本机修订实现；保留主结构与完整半监督流程",
+      "prediction_role": "最终学生",
+      "sample_count": 501,
+      "AoP_valid_count": 501,
+      "AoP_invalid_count": 0
+    },
+    {
+      "id": "t10",
+      "group": "baseline",
+      "name": "UNet Heatmap / T10",
+      "metrics": {
+        "MRE_PSR": "10.631",
+        "MRE_PSL": "15.777",
+        "MRE_FHT": "44.706",
+        "MRE_ALL": "23.704",
+        "Delta_AoP": "10.471"
+      },
+      "source_description": "本机150遍训练终态复用",
+      "prediction_role": "最终模型",
+      "sample_count": 501,
+      "AoP_valid_count": 501,
+      "AoP_invalid_count": 0
+    },
+    {
+      "id": "mt_v2",
+      "group": "baseline",
+      "name": "Mean Teacher（V2热图适配）",
+      "metrics": {
+        "MRE_PSR": "12.897",
+        "MRE_PSL": "18.615",
+        "MRE_FHT": "60.918",
+        "MRE_ALL": "30.810",
+        "Delta_AoP": "19.138"
+      },
+      "source_description": "T10终态开始的关键点热图适配",
+      "prediction_role": "最终EMA教师",
+      "sample_count": 501,
+      "AoP_valid_count": 501,
+      "AoP_invalid_count": 0
+    },
+    {
+      "id": "fixmatch",
+      "group": "baseline",
+      "name": "FixMatch（热图适配）",
+      "metrics": {
+        "MRE_PSR": "14.140",
+        "MRE_PSL": "58.195",
+        "MRE_FHT": "55.266",
+        "MRE_ALL": "42.534",
+        "Delta_AoP": "34.036"
+      },
+      "source_description": "T10终态开始的关键点热图适配",
+      "prediction_role": "最终学生",
+      "sample_count": 501,
+      "AoP_valid_count": 491,
+      "AoP_invalid_count": 10
+    },
+    {
+      "id": "moco_t3",
+      "group": "baseline",
+      "name": "MoCo v2 + FT / T3（适配）",
+      "metrics": {
+        "MRE_PSR": "15.978",
+        "MRE_PSL": "16.993",
+        "MRE_FHT": "70.648",
+        "MRE_ALL": "34.540",
+        "Delta_AoP": "19.555"
+      },
+      "source_description": "本地参考集合与预算等适配",
+      "prediction_role": "Validation选定终态",
+      "sample_count": 501,
+      "AoP_valid_count": 501,
+      "AoP_invalid_count": 0
+    },
+    {
+      "id": "noisy_t1",
+      "group": "supplement",
+      "name": "Noisy Student / T1（作者终态）",
+      "metrics": {
+        "MRE_PSR": "8.557",
+        "MRE_PSL": "9.186",
+        "MRE_FHT": "21.729",
+        "MRE_ALL": "13.157",
+        "Delta_AoP": "4.424"
+      },
+      "source_description": "作者双学生终态直接评价；非本机重训",
+      "prediction_role": "作者双学生融合",
+      "sample_count": 501,
+      "AoP_valid_count": 501,
+      "AoP_invalid_count": 0
+    },
+    {
+      "id": "transunet_t2",
+      "group": "supplement",
+      "name": "TransUNet + USFM / T2（适配）",
+      "metrics": {
+        "MRE_PSR": "12.326",
+        "MRE_PSL": "12.441",
+        "MRE_FHT": "42.961",
+        "MRE_ALL": "22.576",
+        "Delta_AoP": "12.041"
+      },
+      "source_description": "通用蒸馏初始化后的本地适配",
+      "prediction_role": "Validation选定终态",
+      "sample_count": 501,
+      "AoP_valid_count": 501,
+      "AoP_invalid_count": 0
+    }
+  ],
+  "geo_version_rows": [
+    {
+      "id": "geo_v1",
+      "group": "original",
+      "name": "Geo初版V1（raw MSE）",
+      "metrics": {
+        "MRE_PSR": "186.984",
+        "MRE_PSL": "209.489",
+        "MRE_FHT": "94.839",
+        "MRE_ALL": "163.771",
+        "Delta_AoP": "104.220"
+      },
+      "source_description": "e39出发18000步原S/G/P双门EMA",
+      "prediction_role": "最终学生",
+      "sample_count": 501,
+      "AoP_valid_count": 501,
+      "AoP_invalid_count": 0
+    },
+    {
+      "id": "geo_v2_s",
+      "group": "control",
+      "name": "Geo V2（匹配监督参考）",
+      "metrics": {
+        "MRE_PSR": "11.675",
+        "MRE_PSL": "12.702",
+        "MRE_FHT": "28.716",
+        "MRE_ALL": "17.698",
+        "Delta_AoP": "7.420"
+      },
+      "source_description": "同600步桥接，后续3000步监督",
+      "prediction_role": "最终学生",
+      "sample_count": 501,
+      "AoP_valid_count": 501,
+      "AoP_invalid_count": 0
+    },
+    {
+      "id": "geo_v2_full",
+      "group": "model",
+      "name": "GeoEqui-LD V2（完整流程）",
+      "metrics": {
+        "MRE_PSR": "9.182",
+        "MRE_PSL": "10.108",
+        "MRE_FHT": "26.881",
+        "MRE_ALL": "15.390",
+        "Delta_AoP": "6.955"
+      },
+      "source_description": "本机修订实现；保留主结构与完整半监督流程",
+      "prediction_role": "最终学生",
+      "sample_count": 501,
+      "AoP_valid_count": 501,
+      "AoP_invalid_count": 0
+    }
+  ],
+  "mt_version_rows": [
+    {
+      "id": "mt_v1",
+      "group": "original",
+      "name": "MT初版（热图适配）",
+      "metrics": {
+        "MRE_PSR": "135.344",
+        "MRE_PSL": "217.532",
+        "MRE_FHT": "207.123",
+        "MRE_ALL": "186.666",
+        "Delta_AoP": "83.110"
+      },
+      "source_description": "T10出发18000步初版状态策略",
+      "prediction_role": "最终EMA教师",
+      "sample_count": 501,
+      "AoP_valid_count": 387,
+      "AoP_invalid_count": 114
+    },
+    {
+      "id": "mt_v2_s",
+      "group": "control",
+      "name": "MT V2（匹配监督参考）",
+      "metrics": {
+        "MRE_PSR": "13.158",
+        "MRE_PSL": "19.316",
+        "MRE_FHT": "53.305",
+        "MRE_ALL": "28.593",
+        "Delta_AoP": "16.556"
+      },
+      "source_description": "匹配EMA/BN状态策略；3000步",
+      "prediction_role": "最终EMA教师",
+      "sample_count": 501,
+      "AoP_valid_count": 501,
+      "AoP_invalid_count": 0
+    },
+    {
+      "id": "mt_v2",
+      "group": "baseline",
+      "name": "Mean Teacher（V2热图适配）",
+      "metrics": {
+        "MRE_PSR": "12.897",
+        "MRE_PSL": "18.615",
+        "MRE_FHT": "60.918",
+        "MRE_ALL": "30.810",
+        "Delta_AoP": "19.138"
+      },
+      "source_description": "T10终态开始的关键点热图适配",
+      "prediction_role": "最终EMA教师",
+      "sample_count": 501,
+      "AoP_valid_count": 501,
+      "AoP_invalid_count": 0
+    }
+  ],
+  "angle_policy": "退化角度在主均值计180度；全部图保留，另记有效数。",
+  "fixmatch_valid_only_angle_MAE_display": "31.063",
+  "limits": [
+    "不同历史初始化、预算及原生读出，不作等资源或严格原论文复现排名。",
+    "Testing曾用于历史实验，不称首次独立临床确认。",
+    "后续Validation补证不覆盖本表。"
+  ],
+  "new_training_updates": 0,
+  "new_medical_inference": 0,
+  "new_Testing_access": 0
+}
