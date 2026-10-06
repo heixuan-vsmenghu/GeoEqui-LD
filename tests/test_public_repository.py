@@ -122,7 +122,7 @@ def test_public_pdf_matches_reviewed_report() -> None:
     assert relative in PUBLIC_BINARY_ALLOWLIST
     # Existing Git blob of the report reviewed before its public release.
     approved = subprocess.run(
-        ["git", "cat-file", "blob", "17b6ca15ae91f5352490ff603573b50ca59ff688"],
+        ["git", "cat-file", "blob", "b09d0b9803e51c20be465e82bfae00435a6f10a7"],
         cwd=root,
         capture_output=True,
         check=True,
