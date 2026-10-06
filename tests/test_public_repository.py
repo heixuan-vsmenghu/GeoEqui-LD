@@ -8,6 +8,7 @@ from pathlib import Path
 from PIL import Image
 
 PUBLIC_BINARY_ALLOWLIST = {
+    "reports/model_comparison_20261006/REPORT.pdf",
     "reports/phase05/curves/confirmation_validation_metrics.png",
     "reports/phase05/curves/seed42_validation_metrics.png",
     "reports/phase06/curves/validation_metrics.png",
@@ -107,7 +108,23 @@ def test_public_png_metadata_is_sanitized() -> None:
     digest = re.compile(r"\b(?:[0-9a-f]{40}|[0-9a-f]{64})\b")
     for relative in PUBLIC_BINARY_ALLOWLIST:
         assert relative in tracked, f"Missing tracked public curve: {relative}"
+        if Path(relative).suffix.lower() == ".pdf":
+            continue
         with Image.open(root / relative) as image:
             metadata = json.dumps(image.info, sort_keys=True, default=str)
         assert machine_path.search(metadata) is None, f"Machine path found in {relative} metadata"
         assert digest.search(metadata) is None, f"Digest found in {relative} metadata"
+
+
+def test_public_pdf_matches_reviewed_report() -> None:
+    root = Path(__file__).resolve().parents[1]
+    relative = "reports/model_comparison_20261006/REPORT.pdf"
+    assert relative in PUBLIC_BINARY_ALLOWLIST
+    # Existing Git blob of the report reviewed before its public release.
+    approved = subprocess.run(
+        ["git", "cat-file", "blob", "17b6ca15ae91f5352490ff603573b50ca59ff688"],
+        cwd=root,
+        capture_output=True,
+        check=True,
+    ).stdout
+    assert (root / relative).read_bytes() == approved, "Public PDF differs from reviewed report"
