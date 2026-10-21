@@ -1,33 +1,27 @@
 # GeoEqui-LD
 
-产时超声三关键点定位与产程进展角（AoP）测量。
+产时超声三关键点定位与产程进展角（AoP）研究。
 
-## 当前阶段：模型实现与基线对比
+## 当前阶段：先查清Geo的模块与训练问题
 
-更新于2026-10-06。已完成模型实现、半监督训练流程和基线对比，下面汇总当前结果与仍需解决的问题。本次整理使用已有结果，没有新增训练或评价。
+**结果截至2026-10-20；主线整理于2026-10-21。** 本阶段围绕五种粗结构、同源S/SG/SP/SGP、基础长监督及FH目标宽度形成首轮对照。外部STLD和PIPNet-GSSL各两个seed用于补充参照，R18初始化配对提供下一步线索。
 
-**阅读入口：**[五指标主表](reports/model_comparison_20261006/RESULTS.md) · [两页PDF](reports/model_comparison_20261006/REPORT.pdf) · [实现版本与方法来源](reports/model_comparison_20261006/METHODS.md)
+**阅读入口：** [两页主线报告](reports/progress_20261021/REPORT.pdf) · [研究问题与落实情况](reports/progress_20261021/REQUEST_ALIGNMENT.md) · [完整五指标与逐seed结果](reports/progress_20261021/RESULTS.md) · [实验协议](reports/progress_20261021/PROTOCOLS.md)
 
-| 工作内容 | 当前状态 |
-|---|---|
-| 本模型 | HRNet、PS/FH增强、独立解码器及完整S/G/P、双门与EMA流程已运行；当前为明确标记的V2修订版 |
-| 主要对照 | T10、Mean Teacher、FixMatch、MoCo v2 + FT：本机训练或任务适配，范围逐项说明 |
-| 补充参考 | Noisy Student作者终态、TransUNet + USFM初始化适配；不混称本机完整复现 |
-| 评价 | 同一Testing501，五指标MRE_PSR、MRE_PSL、MRE_FHT、MRE_ALL与ΔAoP |
-| 当前问题 | FH困难样本定位和角度稳定性仍有改进空间；部分基线采用本地任务适配 |
+本轮首先回答：结构优势能否保留到半监督末轮；G/P在什么背景下有用；延长监督是否解决训练/验证分化；FH加宽的收益是否伴随其他点位代价。现有结果支持部分条件性收益，但没有证明所有模块有效，也没有解决基础泛化。
 
-## 指标
+**下一优先建议（尚未执行）：** 在Geo内部核查编码器初始化因素，先验证同架构权重、输入通道及BN适配，再固定其余条件做纯监督配对。不是把R18的结果直接外推到HRNet。
 
-三个点的平均位置误差为MRE_PSR / MRE_PSL / MRE_FHT，MRE_ALL为三点等权平均，单位原图像素；ΔAoP为角度平均绝对误差，单位度。五项均越低越好，退化角度规则与有效数量在主表旁注明。
+## 本轮与旧主表的关系
 
-当前Geo V2完整流程MRE_ALL为**15.390像素**、ΔAoP为**6.955度**。同桥接、同后续预算的监督参考为17.698像素、7.420度。T1作者双学生参考13.157像素仍低于Geo；不同来源、预算与读出不构成完全等资源排名。
+为公平比较结构，本轮从共同未训练起点分别训练，并使用Validation100开发集。它不是旧e39状态的同口径复测。原[2026-10-06 Testing501主表](reports/model_comparison_20261006/RESULTS.md)与[原报告](reports/model_comparison_20261006/REPORT.pdf)保持原样，不将旧15.390 px与新开发结果直接相减。
 
-## 实现与公开范围
+两个seed描述训练随机性，样本SD不是置信区间。位置单位为原图像素，角度为度；外部方法为资源适配，不作严格等资源或临床可用性声明。完整缺项见[局限与后续](reports/progress_20261021/LIMITATIONS.md)。
 
-本地实验采用V2修订流程，公开仓中的[模型核心](src/geoequi_ld/models/README.md)、[strict模型](src/geoequi_ld/models/strict.py)、[原MSE损失](src/geoequi_ld/training/strict_losses.py)仍为原实现。V2的调整在文档中单独说明；完整V2训练入口、权重及病例材料尚未公开，目前公开代码不能直接复现全部V2实验。
+## 代码与公开范围
 
-## 历史与来源
+当前公开源码主要是原strict核心、历史脚本和合成测试。**完整V2、当前消融与外部适配的生产训练入口未全部公开，本仓不是当前全部数字的一键复现包。** 本轮只更新聚合、协议和审阅入口，不以文档更新冒充代码实现更新。
 
-[初版失败表](reports/model_comparison_20261006/HISTORY_V1.md) · [历史导航](docs/HISTORY.md) · [来源与发布范围](docs/ATTRIBUTION_AND_RELEASE_SCOPE.md) · [LICENSE](LICENSE)
+医学图像、逐例标签/预测、病例标识、权重、真实采样计划、私有执行记录与通信材料不在公开范围。原版与V2修订、第三方来源分列，见[来源与发布范围](docs/ATTRIBUTION_AND_RELEASE_SCOPE.md)。
 
-早期探索和后续补证另行记录，旧报告、代码和负结果保留。研究设计、第三方实现、医学数据和权重的权利边界见原来源说明。
+[导师查阅导航](docs/ADVISOR_REVIEW_INDEX.md) · [历史](docs/HISTORY.md) · [方法引用](reports/progress_20261021/REFERENCES.md) · [LICENSE](LICENSE)

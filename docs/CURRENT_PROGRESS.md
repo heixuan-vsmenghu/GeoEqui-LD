@@ -1,14 +1,9 @@
-# 当前进展索引
+# 当前阶段
 
-2026-10-06。本页仅导航，不再叠加多个时期的长日志。
+2026-10-21整理，已完成结果截至2026-10-20。
 
-[五指标主表](../reports/model_comparison_20261006/RESULTS.md) · [两页报告](../reports/model_comparison_20261006/REPORT.pdf) · [版本与方法来源](../reports/model_comparison_20261006/METHODS.md) · [历史](HISTORY.md)。
+本轮优先呈现Geo结构、损失、基础训练与FH宽度的首轮证据。STLD/PIP和R18初始化诊断作为补充。实验已执行不等于根因已定位；当前不追加训练。
 
-当前只整理已有结果，没有新训练；已完成的后续复验/消融不替代主表，也不说明所有模块成功。
+见[两页报告](../reports/progress_20261021/REPORT.pdf)、[研究问题落实表](../reports/progress_20261021/REQUEST_ALIGNMENT.md)、[逐seed完整结果](../reports/progress_20261021/RESULTS.md)。下一优先建议为Geo内部编码器初始化配对，权重与输入/BN接入需先核对，尚未执行。
 
-<a id="实现口径"></a>
-<a id="数据数量来源"></a>
-<a id="读出版本与实际调用"></a>
-<a id="stage-2-与监督接续"></a>
-<a id="官方-t10-与-stage-1"></a>
-旧链接对应的实现约定、无标签数量差异和监督阶段说明，完整保留于[更新前固定版本](https://github.com/heixuan-vsmenghu/GeoEqui-LD/blob/435907190fd22ca4a8161bbaaeed62d8913c8db1/docs/CURRENT_PROGRESS.md)，不为历史未决点补造答案。
+旧[Testing501主表](../reports/model_comparison_20261006/RESULTS.md)不覆盖、不混算；完整生产训练系统未全部公开。

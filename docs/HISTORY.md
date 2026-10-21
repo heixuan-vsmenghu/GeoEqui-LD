@@ -13,3 +13,8 @@
 | 初版七行 | [HISTORY_V1](../reports/model_comparison_20261006/HISTORY_V1.md) |
 
 旧文件与提交历史不删除、不强推；不同阶段的MSE/概率监督、GN/SAM等不可混称相同设置或跨表计算净收益。后续补证另存原记录，不在当前首页混排。
+
+
+## 2026-10-21 主线阶段汇报
+
+新增[Geo主线修订报告](../reports/progress_20261021/REPORT.md)及[问题落实情况](../reports/progress_20261021/REQUEST_ALIGNMENT.md)，结果截至2026-10-20。本文上方“当前”表述保留为历史时点；最新阶段入口见[当前进展](CURRENT_PROGRESS.md)。旧Testing501主表和旧报告原字节保留，不改写历史或拼接不同评价口径。
