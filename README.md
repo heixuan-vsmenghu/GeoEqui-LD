@@ -24,4 +24,4 @@
 
 医学图像、逐例标签/预测、病例标识、权重、真实采样计划、私有执行记录与通信材料不在公开范围。原版与V2修订、第三方来源分列，见[来源与发布范围](docs/ATTRIBUTION_AND_RELEASE_SCOPE.md)。
 
-[导师查阅导航](docs/ADVISOR_REVIEW_INDEX.md) · [历史](docs/HISTORY.md) · [方法引用](reports/progress_20261021/REFERENCES.md) · [LICENSE](LICENSE)
+[查阅导航](docs/ADVISOR_REVIEW_INDEX.md) · [历史](docs/HISTORY.md) · [方法引用](reports/progress_20261021/REFERENCES.md) · [LICENSE](LICENSE)
