@@ -4,7 +4,7 @@
 
 本轮优先呈现Geo结构、损失、基础训练与FH宽度的首轮证据。STLD/PIP和R18初始化诊断作为补充。实验已执行不等于根因已定位；当前不追加训练。
 
-见[两页报告](../reports/progress_20261021/REPORT.pdf)、[研究问题落实表](../reports/progress_20261021/REQUEST_ALIGNMENT.md)、[逐seed完整结果](../reports/progress_20261021/RESULTS.md)。下一优先建议为Geo内部编码器初始化配对，权重与输入/BN接入需先核对，尚未执行。
+见[两页报告](../reports/progress_20261021/REPORT.pdf)、[研究问题落实表](../reports/progress_20261021/REQUEST_ALIGNMENT.md)、[逐seed完整结果](../reports/progress_20261021/RESULTS.md)。目前我想进一步弄清Geo纯监督训练与验证分化的原因，编码器初始化是考虑中的一个排查方向。若沿此方向开展配对，拟先核对同架构权重与输入/BN接入；具体范围和安排留待进一步讨论，目前尚未执行。
 
 源码入口及对应范围见[源码阅读导航](CODE_MAP.md)。
 

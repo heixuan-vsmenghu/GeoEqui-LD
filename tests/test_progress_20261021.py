@@ -150,7 +150,7 @@ def test_mainline_revision_uses_structure_before_external():
     text = (REPORT / "REPORT.md").read_text(encoding="utf-8")
     assert text.index("1　结构消融") < text.index("5　补充对口参照")
     assert "共同未训练起点" in text
-    assert "该计划尚未执行" in text
+    assert "目前尚未执行" in text
     assert "本阶段可汇报" not in text
     for variant in ("去PS增强", "去FH增强", "无增强・独立头", "无增强・共享头"):
         assert variant in text
