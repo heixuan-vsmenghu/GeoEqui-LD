@@ -148,7 +148,7 @@ def test_cdf_keeps_seeds_and_denominators_separate():
 
 def test_mainline_revision_uses_structure_before_external():
     text = (REPORT / "REPORT.md").read_text(encoding="utf-8")
-    assert text.index("1　结构消融") < text.index("5　补充对口参照")
+    assert text.index("1　结构消融") < text.index("5　外部方法参照")
     assert "共同未训练起点" in text
     assert "目前尚未执行" in text
     assert "本阶段可汇报" not in text
