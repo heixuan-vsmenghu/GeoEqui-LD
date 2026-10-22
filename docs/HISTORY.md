@@ -18,3 +18,7 @@
 ## 2026-10-21 主线阶段汇报
 
 新增[Geo主线修订报告](../reports/progress_20261021/REPORT.md)及[问题落实情况](../reports/progress_20261021/REQUEST_ALIGNMENT.md)，结果截至2026-10-20。本文上方“当前”表述保留为历史时点；最新阶段入口见[当前进展](CURRENT_PROGRESS.md)。旧Testing501主表和旧报告原字节保留，不改写历史或拼接不同评价口径。
+
+## 2026-10-22 发送版报告与源码导航
+
+[两页报告](../reports/progress_20261021/REPORT.pdf)补充可点击GitHub入口，整理日期更新为10月22日，结果截止仍为10月20日。新增[源码阅读导航](CODE_MAP.md)，修正原strict及历史配置说明的过时指向；科学数值、代码计算和旧Testing主表保持原样。
