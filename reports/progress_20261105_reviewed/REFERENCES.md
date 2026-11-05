@@ -1,6 +1,6 @@
 # 复核版证据来源与阅读顺序
 
-先读 [阶段汇报](REPORT.md) 或 [PDF](REPORT.pdf)，再按问题查看 [证据与主实验对应表](EVIDENCE_MAP.md) 或 [PDF](EVIDENCE_MAP.pdf)。
+先读 [训练性能恢复与消融验证](REPORT.md) 或 [PDF](REPORT.pdf)，再按问题查看 [证据与主实验对应表](EVIDENCE_MAP.md) 或 [PDF](EVIDENCE_MAP.pdf)。
 
 1. 性能下降排查和旧训练身份见 [10月阶段报告](../progress_20261021/REPORT.md)。后续状态、计划、Adam、初始化、步幅和固定末轮的对应证据已在本复核版列明，公开材料只保留聚合。
 2. 43/44 低步幅四格及同期步幅配对来源于已完成的 20261030/31 固定任务。四格保留全部八条末轮；F1101A/B 是后续不同预热来源。
