@@ -8,6 +8,8 @@ from pathlib import Path
 from PIL import Image
 
 PUBLIC_BINARY_ALLOWLIST = {
+    "reports/progress_20261105_reviewed/REPORT.pdf",
+    "reports/progress_20261105_reviewed/EVIDENCE_MAP.pdf",
     "reports/progress_20261105/REPORT.pdf",
     "reports/progress_20261021/REPORT.pdf",
     "reports/model_comparison_20261006/REPORT.pdf",

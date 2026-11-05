@@ -1,0 +1,204 @@
+{
+  "as_of": "2026-11-05",
+  "scope": "Descriptive aggregate evidence on repeated Validation100 development images",
+  "metric_order": [
+    "PSR_px",
+    "PSL_px",
+    "FH_px",
+    "ALL_px",
+    "AoP_deg"
+  ],
+  "current_native_sgp": {
+    "source_task": "GEO_FRESH_LOW_S_VS_SGP_20261102",
+    "source_warm_task": "GEO_FRESH_WARM_LR_CONFIRM_20261101",
+    "new_warm_updates_this_batch": 0,
+    "continued_updates_per_arm": 3000,
+    "learning_rate": 1e-05,
+    "role": "student",
+    "readout": "ordinary_DSNT",
+    "F1101A": [
+      8.48968,
+      13.788804,
+      26.580544,
+      16.286343,
+      5.141077
+    ],
+    "F1101B": [
+      8.931365,
+      13.603976,
+      32.706501,
+      18.413947,
+      4.966339
+    ],
+    "matched_S_ALL": [
+      23.204441,
+      28.208803
+    ],
+    "matched_S_AoP": [
+      14.060007,
+      14.925186
+    ],
+    "S_retains_U_forward_and_teacher": true,
+    "SG_SP_arms_in_this_batch": false
+  },
+  "fixed_STLD": {
+    "role_readout": "each fixed endpoint preserves its native readout",
+    "STLD1801": [
+      10.654,
+      16.399,
+      24.184,
+      17.079,
+      5.657
+    ],
+    "STLD1901": [
+      11.805,
+      17.248,
+      27.109,
+      18.72,
+      5.876
+    ],
+    "two_individual_error_mean": [
+      11.229,
+      16.823,
+      25.646,
+      17.9,
+      5.767
+    ]
+  },
+  "native_minus_fixed_cross_comparisons": {
+    "metric_order": [
+      "ALL_px",
+      "FH_px",
+      "AoP_deg"
+    ],
+    "F1101A_minus_STLD1801": [
+      -0.792512,
+      2.396491,
+      -0.515779
+    ],
+    "F1101A_minus_STLD1901": [
+      -2.434097,
+      -0.527958,
+      -0.735118
+    ],
+    "F1101B_minus_STLD1801": [
+      1.335092,
+      8.522448,
+      -0.690517
+    ],
+    "F1101B_minus_STLD1901": [
+      -0.306492,
+      5.597998,
+      -0.909856
+    ],
+    "two_source_mean_difference": [
+      -0.549502,
+      3.997245,
+      -0.712818
+    ],
+    "images_ALL_lower": 61,
+    "images_FH_higher": 65
+  },
+  "old_warm43_44_learning_rate_pair": {
+    "source_task": "GEO_SGP_STEP_SIZE_PAIR_20261030",
+    "BASE_lr": 0.0001,
+    "LOW_lr": 1e-05,
+    "BASE_ALL": [
+      19.094,
+      19.869
+    ],
+    "LOW_ALL": [
+      17.789,
+      17.0
+    ],
+    "BASE_AoP": [
+      7.223,
+      7.396
+    ],
+    "LOW_AoP": [
+      5.472,
+      6.254
+    ]
+  },
+  "fresh_warm_learning_rate_pair": {
+    "source_task": "GEO_FRESH_WARM_LR_CONFIRM_20261101",
+    "LOW_minus_BASE_ALL": [
+      0.7614008248240012,
+      -25.711250990497728
+    ],
+    "interpretation": "source-dependent effects, not uniformly lower ALL"
+  },
+  "old_warm43_44_low_lr_factorial": {
+    "source_task": "GEO_LOW_LR_MATCHED_FACTORIAL_20261031",
+    "lr": 1e-05,
+    "new_warm_updates": 0,
+    "source_warm_task": "GEO_HRNET_INIT_PAIRED_20261026",
+    "metric_order": [
+      "ALL_43",
+      "ALL_44",
+      "AoP_43",
+      "AoP_44"
+    ],
+    "S": [
+      24.9352,
+      23.5076,
+      14.2361,
+      12.5904
+    ],
+    "SG": [
+      19.2442,
+      18.4325,
+      5.5381,
+      5.0605
+    ],
+    "SP": [
+      21.0466,
+      21.1488,
+      8.9364,
+      8.3148
+    ],
+    "SGP": [
+      17.9786,
+      17.6879,
+      6.1538,
+      6.2434
+    ]
+  },
+  "FH_course_pair": {
+    "source_task": "GEO_MATCHED_FH_BLOCK_PILOT_20261103",
+    "sources": 1,
+    "warm_updates_per_arm": 9000,
+    "semi_updates_per_arm": 3000,
+    "from_F1101A_medical_zero_template": true,
+    "reuses_F1101A_trained_warm": false,
+    "own_FULL_semi": [
+      9.165,
+      13.922,
+      31.36388337137365,
+      18.150223762030258,
+      6.897236292934622
+    ],
+    "own_NO_FH_semi": [
+      10.11,
+      13.364,
+      31.237484546223865,
+      18.237007792286274,
+      6.865234352506453
+    ],
+    "NO_FH_retains_decoder": true,
+    "shared_prespecified_semi_plan": true,
+    "FH_p95_FULL": 86.64306588925284,
+    "FH_p95_NO_FH": 89.72553514715307,
+    "other_current_structure_matrix_complete": false
+  },
+  "interpretation": {
+    "mainline_priority": [
+      "native overall performance and FH weakness",
+      "corresponding loss and structure controls",
+      "additional diagnostics and baselines"
+    ],
+    "radius_ensembles_use_STLD_outputs": true,
+    "external_cohort_evaluated": false,
+    "no_new_science_in_this_review": true
+  }
+}

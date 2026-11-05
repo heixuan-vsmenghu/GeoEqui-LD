@@ -2,7 +2,16 @@
 
 产时超声三关键点（PSR、PSL、FH）定位与产程进展角（AoP）研究。
 
-## 当前结果：2026-11-05
+## 本周期汇报入口
+
+[本周期报告 PDF](reports/progress_20261105_reviewed/REPORT.pdf) · [报告正文](reports/progress_20261105_reviewed/REPORT.md) · [主实验与消融证据对应表](reports/progress_20261105_reviewed/EVIDENCE_MAP.md) · [阶段查阅导航](docs/ADVISOR_REVIEW_INDEX.md)
+
+本周期按原生模型性能、同协议消融、FH专项诊断组织证据。原生Geo两来源的ALL均值恢复至 **17.350 px**，同源SGP与S的组合辅助增量已有配对结果；FH均值 **29.644 px** 相对固定STLD两单模型误差均值 **25.646 px** 仍有差距。一个来源的FULL/NO_FH完成各自完整课程，结果呈指标取舍。当前核心问题是取得更稳定的原生FH改善，并按确定的主实验协议补齐相应结构和损失对照。
+
+## 2026-11-05 专项结果快照
+
+<details>
+<summary>展开 FH 推理组合与过夜覆盖的早版记录</summary>
 
 [一页报告 PDF](reports/progress_20261105/REPORT.pdf) · [报告正文](reports/progress_20261105/REPORT.md) · [比较表与完整口径](reports/progress_20261105/KEY_COMPARISONS.md) · [方法与限制](reports/progress_20261105/METHODS_AND_LIMITS.md) · [证据状态](reports/progress_20261105/EVIDENCE_STATUS.json)
 
@@ -11,6 +20,8 @@
 使用两份 Geo 与两份 STLD 输出的 B 对称半径组合达到 **ALL 15.758 px、FH 25.287 px、AoP 4.938°**。这是依赖 STLD 的组合输出，原生 Geo 的结果仍单列。其清洁 FH 相对 STLD 坐标集成高 **0.068 px**，相对两 STLD 单模型误差均值低 **0.359 px**；两种对照不可互换。
 
 A/B 主实验各完成五条件；扩展按预算以 **partial** 关闭。A 完整覆盖离散 ±11 方格，B 完整覆盖离散 ±8 方格并有额外条件，均未完成预定 ±16。B 对 STLD1901 的 341 个实交条件五项均值均较低；对较强坐标集成、STLD1801 以及逐图检验仍有不利项。完整 ±8 的逐图五指标全部不退步条件为 **0/289**。这些是同一批100开发图像上的重复扰动，独立患者数未知，不构成临床或外部验证。
+
+</details>
 
 ## 如何阅读与复核
 
