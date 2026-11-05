@@ -22,7 +22,7 @@
 | H2 | 16 | 3 | 31.185 px | 13.563° |
 | H3 | 16 | 14 | 24.901 px | 10.289° |
 
-同一 validation 用于选模和汇报，主要是单 seed 描述；结构、实际轮数和部分归一化设置不同，非严格因果比较。对齐第 16 轮时，H2 为 28.419 px / 13.933°，H3 为 25.936 px / 14.279°，定位与角度指标并非同时改善。解释和勘误见[原说明](https://github.com/heixuan-vsmenghu/GeoEqui-LD/blob/e3af9e2a2c29e5de3beab912fe1ecf7592300f8b/docs/RESULT_INTERPRETATION_NOTES.md)。
+同一 validation 用于选模和结果展示，主要是单 seed 描述；结构、实际轮数和部分归一化设置不同，非严格因果比较。对齐第 16 轮时，H2 为 28.419 px / 13.933°，H3 为 25.936 px / 14.279°，定位与角度指标并非同时改善。解释和勘误见[原说明](https://github.com/heixuan-vsmenghu/GeoEqui-LD/blob/e3af9e2a2c29e5de3beab912fe1ecf7592300f8b/docs/RESULT_INTERPRETATION_NOTES.md)。
 
 ## 历史数据与几何接口
 

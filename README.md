@@ -2,11 +2,11 @@
 
 产时超声三关键点（PSR、PSL、FH）定位与产程进展角（AoP）研究。
 
-## 本周期汇报入口
+## 本周期研究进展
 
 [本周期报告 PDF](reports/progress_20261105_reviewed/REPORT.pdf) · [报告正文](reports/progress_20261105_reviewed/REPORT.md) · [主实验与消融证据对应表](reports/progress_20261105_reviewed/EVIDENCE_MAP.md) · [阶段查阅导航](docs/ADVISOR_REVIEW_INDEX.md)
 
-本周期报告介绍初始化与训练修正、整体性能、几何一致性与伪监督、新来源复验及FH结构对照。原生Geo两来源的ALL均值恢复至 **17.350 px**，同源SGP与S的组合辅助增量已有配对结果；FH均值 **29.644 px** 相对固定STLD两单模型误差均值 **25.646 px** 仍有差距。一个来源的FULL/NO_FH完成各自完整课程，结果呈指标取舍。当前核心问题是取得更稳定的原生FH改善，并按确定的主实验协议补齐相应结构和损失对照。
+本周期报告介绍初始化与训练修正、整体性能、几何一致性与伪监督、新来源复验及FH结构对照。原生Geo两来源的ALL均值恢复至 **17.350 px**，同源SGP与S的组合辅助增量已有配对结果；FH均值 **29.644 px** 相对固定STLD两单模型误差均值 **25.646 px** 仍有差距。一个来源的FULL/NO_FH完成各自完整课程，结果呈指标取舍。原生FH误差及来源间变化仍有待进一步分析。后续拟结合这些结果明确主实验条件，并补充相应的结构和损失对照。
 
 ## 2026-11-05 专项结果快照
 
@@ -25,7 +25,7 @@ A/B 主实验各完成五条件；扩展按预算以 **partial** 关闭。A 完�
 
 ## 如何阅读与复核
 
-- [导师查阅导航](docs/ADVISOR_REVIEW_INDEX.md)：按研究问题查看证据与限制。
+- [阶段查阅导航](docs/ADVISOR_REVIEW_INDEX.md)：按研究问题查看证据与限制。
 - [数值表](reports/progress_20261105/KEY_COMPARISONS.md)与[CSV](reports/progress_20261105/KEY_COMPARISONS.csv)：区分模型身份、误差平均、坐标集成、边际p95与配对差值p95。
 - [源码导航](docs/CODE_MAP.md)：公开 strict 核心、历史实现与当前可复核部分。
 - [B组合函数](src/geoequi_ld/fh_radius_postprocess.py)及[合成测试](tests/test_fh_radius_postprocess.py)：精确提取封存组合逻辑；不包含四端点推理或完整生产训练入口。

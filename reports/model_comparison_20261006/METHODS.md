@@ -40,4 +40,4 @@
 
 [原strict模型](../../src/geoequi_ld/models/strict.py)与[原MSE损失](../../src/geoequi_ld/training/strict_losses.py)保持原样。本次不补写示例冒充已执行V2源码，完整V2运行入口、权重及病例材料未随文档公开；不能声称克隆即可复现全部主表。
 
-[来源与发布范围](../../docs/ATTRIBUTION_AND_RELEASE_SCOPE.md)及原LICENSE不变。公开版不含导师原稿、私人通信、图像/标签/逐例、权重、私有仓地址、认证信息或机器路径。
+[来源与发布范围](../../docs/ATTRIBUTION_AND_RELEASE_SCOPE.md)及原LICENSE不变。公开版不含未公开研究原稿、私人通信、图像/标签/逐例、权重、私有仓地址、认证信息或机器路径。

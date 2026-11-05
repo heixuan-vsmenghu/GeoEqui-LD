@@ -46,4 +46,4 @@ strict GeoEqui-LD 使用 300 张有标签 train、100 张 validation，完成总
 - strict 主结果来自 seed=42 的单次运行，没有在本摘录中增加多种子统计或补做实验。
 - 原 Stage 2 从 epoch 39 接续后，student raw-BN validation argmax ALL 在 epoch 1/2 退化到 267.830/304.203 px，实际在 epoch 2 停止。完成监督预热不意味着联合训练已成功；后续短程对照的限制见[热图与 DSNT 摘录](HEATMAP_DSNT_CHECK.md)。
 
-[返回当前进展](../../docs/CURRENT_PROGRESS.md) · [导师查阅索引](../../docs/ADVISOR_REVIEW_INDEX.md)
+[返回当前进展](../../docs/CURRENT_PROGRESS.md) · [阶段查阅索引](../../docs/ADVISOR_REVIEW_INDEX.md)
