@@ -129,7 +129,7 @@
     "interpretation": "source-dependent effects, not uniformly lower ALL"
   },
   "old_warm43_44_low_lr_factorial": {
-    "source_task": "GEO_LOW_LR_MATCHED_FACTORIAL_20261031",
+    "source_task": "GEO_LOWER_LR_MATCHED_FACTORIAL_20261031",
     "lr": 1e-05,
     "new_warm_updates": 0,
     "source_warm_task": "GEO_HRNET_INIT_PAIRED_20261026",
