@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "as_of": "2026-11-05",
+  "scope": "Public aggregate evidence summary; publication adds no scientific execution",
+  "metric_units": {
+    "PSR": "original-image px",
+    "PSL": "original-image px",
+    "FH": "original-image px",
+    "ALL": "mean of three landmark errors in px",
+    "AoP": "degree"
+  },
+  "development_data": {
+    "images_per_condition": 100,
+    "independent_patient_count": null,
+    "independent_external_validation": false,
+    "repeated_perturbations_are_new_patients": false
+  },
+  "phases": [
+    {
+      "task": "A DUAL41",
+      "status": "complete",
+      "conditions": 5,
+      "forward_positions": 2000,
+      "native_model_calls": 1250
+    },
+    {
+      "task": "B DUAL42 MAIN",
+      "status": "complete",
+      "conditions": 5,
+      "forward_positions": 2000,
+      "native_model_calls": 1250
+    },
+    {
+      "task": "A DUAL43",
+      "status": "partial",
+      "new_translation_conditions": 610,
+      "forward_positions": 244000,
+      "native_model_calls": 152500
+    },
+    {
+      "task": "B DUAL42 SUPPLEMENT",
+      "status": "partial",
+      "independent_audit_status": "partial_verified",
+      "new_translation_conditions": 332,
+      "new_gray_conditions": 4,
+      "new_conditions": 336,
+      "forward_positions": 134400,
+      "native_model_calls": 84000,
+      "unknown_positions": 0,
+      "torn_journal_records": 0
+    }
+  ],
+  "merged_coverage": {
+    "A": {
+      "translation_conditions": 615,
+      "largest_complete_discrete_square_radius_px": 11,
+      "complete_square_translation_conditions": 529,
+      "extra_translation_conditions": 86
+    },
+    "B": {
+      "translation_conditions": 337,
+      "gray_conditions": 4,
+      "unique_complete_conditions": 341,
+      "largest_complete_discrete_square_radius_px": 8,
+      "complete_square_translation_conditions": 289,
+      "extra_translation_conditions": 48
+    },
+    "planned_square_radius_px": 16,
+    "planned_square_translation_conditions": 1089,
+    "planned_full_square_completed_by_either_host": false,
+    "DUAL44_started": false,
+    "DUAL45_started": false
+  },
+  "compute_totals": {
+    "forward_positions": 382400,
+    "native_model_calls": 239000,
+    "counts_are_independent_patients": false
+  },
+  "comparison_identity": {
+    "native_geo": "Two Geo sources scored separately, then errors averaged",
+    "A_pair_radius": "Each Geo source uses its paired STLD FH radius, then errors averaged",
+    "B_symmetric": "Two Geo coordinate predictions plus two STLD FH predictions form one coordinate output",
+    "STLD_error_mean": "Score each fixed endpoint separately, then average errors",
+    "STLD_coordinate_ensemble": "Average endpoint coordinates first, then score"
+  },
+  "selected_aggregate_checks": {
+    "B_complete_pm8_strict_all_five_means_vs_STLD_coordinate_ensemble": {
+      "numerator": 53,
+      "denominator": 289
+    },
+    "B_complete_pm8_strict_all_five_means_vs_STLD_individual_error_mean": {
+      "numerator": 254,
+      "denominator": 289,
+      "paired_distribution_inference_allowed": false
+    },
+    "B_all_delivered_strict_all_five_means_vs_STLD1901": {
+      "numerator": 341,
+      "denominator": 341
+    },
+    "B_complete_pm8_all_images_all_five_metrics_nonworse": {
+      "numerator": 0,
+      "denominator": 289
+    },
+    "A_complete_pm8_all_images_all_five_metrics_nonworse": {
+      "numerator": 0,
+      "denominator": 289
+    }
+  },
+  "publication_verification": {
+    "fixed_aggregate_handoff": true,
+    "B_existing_sealed_aggregates_cross_checked": true,
+    "A_and_historical_training_source": "Fixed aggregate handoff; not independently rerun for this publication",
+    "all_historical_cases_weights_or_packages_recertified": false,
+    "new_training_steps": 0,
+    "new_model_inference_calls": 0,
+    "new_Testing_runs": 0,
+    "new_bootstrap_runs": 0
+  },
+  "historical_archive": {
+    "original_packages": 9,
+    "origin_and_transport_integrity": "verified by two readers",
+    "A_independent_receipt_and_index": "complete_verified; nine packages, original DUAL15 remains partial",
+    "DUAL15_science_status": "partial",
+    "changes_scientific_status": false
+  },
+  "limits": [
+    "Same 100 development images repeatedly perturbed",
+    "Independent patient count unknown",
+    "No per-case no-harm guarantee",
+    "Both planned pm16 grids incomplete",
+    "STLD-dependent mixed output is not native Geo",
+    "Marginal quantile difference is not quantile of paired differences",
+    "Full production training and endpoint runners are not all public"
+  ]
+}

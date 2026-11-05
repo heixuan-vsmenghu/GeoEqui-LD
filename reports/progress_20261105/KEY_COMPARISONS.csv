@@ -1,0 +1,8 @@
+clean_condition_result_identity,PSR_px,PSL_px,FH_px,ALL_px,AoP_deg
+native_geo_error_mean,8.711,13.696,29.644,17.350,5.054
+A_pair_radius_error_mean,8.711,13.696,25.686,16.031,5.054
+B_symmetric_coordinate_output,8.551,13.436,25.287,15.758,4.938
+STLD1801,10.654,16.399,24.184,17.079,5.657
+STLD1901,11.805,17.248,27.109,18.720,5.876
+STLD_individual_error_mean,11.229,16.823,25.646,17.900,5.767
+STLD_coordinate_ensemble,10.923,16.556,25.219,17.566,5.287

@@ -1,27 +1,29 @@
 # GeoEqui-LD
 
-产时超声三关键点定位与产程进展角（AoP）研究。
+产时超声三关键点（PSR、PSL、FH）定位与产程进展角（AoP）研究。
 
-## 当前阶段实验结果
+## 当前结果：2026-11-05
 
-**结果截至2026-10-20；报告与源码导航整理于2026-10-22。** 本阶段完成五种结构变体、同源S/SG/SP/SGP、监督训练时长及FH目标宽度的首轮对照。STLD与PIPNet-GSSL各两个seed作为外部参照，另保留短预算R18初始化配对结果。
+[一页报告 PDF](reports/progress_20261105/REPORT.pdf) · [报告正文](reports/progress_20261105/REPORT.md) · [比较表与完整口径](reports/progress_20261105/KEY_COMPARISONS.md) · [方法与限制](reports/progress_20261105/METHODS_AND_LIMITS.md) · [证据状态](reports/progress_20261105/EVIDENCE_STATUS.json)
 
-**阅读入口：** [两页主线报告](reports/progress_20261021/REPORT.pdf) · [研究问题与落实情况](reports/progress_20261021/REQUEST_ALIGNMENT.md) · [完整五指标与逐seed结果](reports/progress_20261021/RESULTS.md) · [实验协议](reports/progress_20261021/PROTOCOLS.md) · [源码阅读导航](docs/CODE_MAP.md)
+原生 Geo 两训练来源在 Validation100 开发图像上的 ALL 误差均值为 **17.350 px**；匹配的 SGP−S 对照分别降低 **6.918 / 9.795 px**。S 保留无标签前向与教师流程，仅关闭辅助反传。一个来源的 FULL/NO_FH 训练对照出现指标取舍，尚不支持删除 FH 增强模块。
 
-当前两seed对照中，SGP相对匹配S的ALL均降低。完整结构在监督预热阶段的ALL优势未延续至半监督终点；延长监督训练未消除训练与验证误差差距；FH目标加宽的收益伴随其他点位误差增加。现有结果支持条件性结论，尚不能确定各模块的独立贡献或基础泛化问题的原因。
+使用两份 Geo 与两份 STLD 输出的 B 对称半径组合达到 **ALL 15.758 px、FH 25.287 px、AoP 4.938°**。这是依赖 STLD 的组合输出，原生 Geo 的结果仍单列。其清洁 FH 相对 STLD 坐标集成高 **0.068 px**，相对两 STLD 单模型误差均值低 **0.359 px**；两种对照不可互换。
 
-**后续工作（拟开展，尚未执行）：** 编码器初始化拟作为训练与验证误差差距的待检验因素。在核对同架构预训练权重、输入通道映射及BN适配后，拟开展其他条件一致的纯监督配对。现有R18配对结果不能直接解释HRNet的表现。
+A/B 主实验各完成五条件；扩展按预算以 **partial** 关闭。A 完整覆盖离散 ±11 方格，B 完整覆盖离散 ±8 方格并有额外条件，均未完成预定 ±16。B 对 STLD1901 的 341 个实交条件五项均值均较低；对较强坐标集成、STLD1801 以及逐图检验仍有不利项。完整 ±8 的逐图五指标全部不退步条件为 **0/289**。这些是同一批100开发图像上的重复扰动，独立患者数未知，不构成临床或外部验证。
 
-## 本轮与旧主表的关系
+## 如何阅读与复核
 
-为公平比较结构，本轮从共同未训练起点分别训练，并使用Validation100开发集。它不是旧e39状态的同口径复测。原[2026-10-06 Testing501主表](reports/model_comparison_20261006/RESULTS.md)与[原报告](reports/model_comparison_20261006/REPORT.pdf)保持原样，不将旧15.390 px与新开发结果直接相减。
+- [导师查阅导航](docs/ADVISOR_REVIEW_INDEX.md)：按研究问题查看证据与限制。
+- [数值表](reports/progress_20261105/KEY_COMPARISONS.md)与[CSV](reports/progress_20261105/KEY_COMPARISONS.csv)：区分模型身份、误差平均、坐标集成、边际p95与配对差值p95。
+- [源码导航](docs/CODE_MAP.md)：公开 strict 核心、历史实现与当前可复核部分。
+- [B组合函数](src/geoequi_ld/fh_radius_postprocess.py)及[合成测试](tests/test_fh_radius_postprocess.py)：精确提取封存组合逻辑；不包含四端点推理或完整生产训练入口。
+- [来源与发布范围](docs/ATTRIBUTION_AND_RELEASE_SCOPE.md)、[方法引用](reports/progress_20261105/REFERENCES.md)与[MIT LICENSE](LICENSE)。
 
-两个seed描述训练随机性，样本SD不是置信区间。位置单位为原图像素，角度为度；外部方法为资源适配，不作严格等资源或临床可用性声明。完整缺项见[局限与后续](reports/progress_20261021/LIMITATIONS.md)。
+本仓包含聚合结果、可读报告及部分合法源码。完整 V2、当前结构消融与外部适配的生产训练入口未全部公开，**不能一键复现当前全部实验数字**。本次整理没有新增训练、模型推理、Testing 或 bootstrap。
 
-## 代码与公开范围
+## 历史结果保持原样
 
-当前公开源码主要是原strict核心、历史脚本和合成测试。**完整V2、当前消融与外部适配的生产训练入口未全部公开，本仓不是当前全部数字的一键复现包。** 已公开源码的模块与版本对应关系见[源码阅读导航](docs/CODE_MAP.md)；原strict、早期U-Net训练脚本与本轮实验入口分列说明。
+[2026-10 阶段报告](reports/progress_20261021/REPORT.pdf)与[完整五指标](reports/progress_20261021/RESULTS.md)保留当时口径。历史 [2026-10-06 Testing501 主表](reports/model_comparison_20261006/RESULTS.md)及[原报告](reports/model_comparison_20261006/REPORT.pdf)保持原样；旧 Testing501 的15.390 px与Validation100的19.978 px及本轮组合开发结果分属不同对象，不直接相减作提升结论。两个训练来源不是两份独立临床测试队列。
 
-医学图像、逐例标签/预测、病例标识、权重、真实采样计划、私有执行记录与通信材料不在公开范围。原版与V2修订、第三方来源分列，见[来源与发布范围](docs/ATTRIBUTION_AND_RELEASE_SCOPE.md)。
-
-[查阅导航](docs/ADVISOR_REVIEW_INDEX.md) · [历史](docs/HISTORY.md) · [方法引用](reports/progress_20261021/REFERENCES.md) · [LICENSE](LICENSE)
+医学图像、逐例标签与预测、病例标识、权重、真实采样计划、私有执行记录和通信材料不在本次公开范围。更完整历史见[HISTORY](docs/HISTORY.md)。
