@@ -1,6 +1,12 @@
 # 阶段查阅导航
 
-本周期结果截至2026年11月5日上午。[本周期报告 PDF](../reports/progress_20261105_reviewed/REPORT.pdf)、[报告正文](../reports/progress_20261105_reviewed/REPORT.md)和[主实验与消融证据对应表](../reports/progress_20261105_reviewed/EVIDENCE_MAP.md)按原生性能恢复、对应消融和FH专项诊断组织。评价使用同一固定Validation100开发集，位置误差为原图像素，角度误差为度，数值越低越好。
+## 2026-11-19 研究进展
+
+[阶段正文](../reports/progress_20261119/REPORT.md)列出[教师伪监督的 AoP 复验](../reports/progress_20261119/REPORT.md#1-教师伪监督对-aop-的作用)、[FH 定位与外部参照](../reports/progress_20261119/REPORT.md#2-fh-定位的改善与剩余差距)及[FH 结构消融](../reports/progress_20261119/REPORT.md#3-fh-增强结构的作用)。追加训练的起点比较和同期对照分别列出，锚角监督同时报告 FH 均值、p95、最大误差及完整 AoP。验证沿用固定的 100 张开发图像，没有新增 Testing。
+
+## 2026-11-05 阶段记录
+
+结果截至2026年11月5日上午。[阶段报告 PDF](../reports/progress_20261105_reviewed/REPORT.pdf)、[报告正文](../reports/progress_20261105_reviewed/REPORT.md)和[主实验与消融证据对应表](../reports/progress_20261105_reviewed/EVIDENCE_MAP.md)按原生性能恢复、对应消融和FH专项诊断组织。评价使用同一固定Validation100开发集，位置误差为原图像素，角度误差为度，数值越低越好。
 
 ## 原生模型的性能恢复
 

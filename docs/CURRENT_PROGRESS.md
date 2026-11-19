@@ -1,6 +1,12 @@
 # 当前研究进展
 
-结果截至2026年11月5日。最新[阶段报告](../reports/progress_20261105_reviewed/REPORT.md)及[PDF](../reports/progress_20261105_reviewed/REPORT.pdf)、[实验与消融对应表](../reports/progress_20261105_reviewed/EVIDENCE_MAP.md)集中呈现初始化、学习率、辅助损失及FH结构对照；详细入口见[阶段查阅导航](ADVISOR_REVIEW_INDEX.md)。
+结果截至 2026 年 11 月 19 日。以两套新预热权重比较，保留几何一致性时，加入教师伪监督均降低了 AoP 平均误差。固定追加训练从两套完整模型初态出发，也降低了 FH、ALL 和 AoP 的平均误差；相对同期只使用标签监督反传的对照，其中一套初态的 AoP 平均误差略升。固定 0.1 锚角监督在两套初态都降低了 FH 均值，FH 的 p95 却都升高。结构对照显示，FH 增强块的效果随初态和组件组合改变。[11 月 19 日阶段结果](../reports/progress_20261119/REPORT.md) · [阶段查阅导航](ADVISOR_REVIEW_INDEX.md)
+
+该阶段使用固定的 100 张开发验证图像，没有新增 Testing。后续拟进一步比较高误差样本上的 FH 与完整 AoP，并保留固定参照的实验条件。
+
+## 2026-11-05 阶段记录
+
+[阶段报告](../reports/progress_20261105_reviewed/REPORT.md)、[PDF](../reports/progress_20261105_reviewed/REPORT.pdf)及[实验与消融对应表](../reports/progress_20261105_reviewed/EVIDENCE_MAP.md)集中呈现了当时的初始化、学习率、辅助损失及 FH 结构对照。
 
 初始化配对已完成。两份新预热来源的完整模型ALL为16.286/18.414 px，误差均值17.350 px；同来源SGP相对S的五项误差均值均较低。原生FH均值29.644 px，相对固定STLD误差均值25.646 px仍有差距。单来源FULL/NO_FH出现均值与尾部取舍。后续拟进一步分析FH方向与径向误差，并结合结果讨论对应训练及结构验证的范围。
 

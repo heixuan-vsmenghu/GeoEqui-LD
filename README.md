@@ -4,9 +4,13 @@
 
 ## 本周期研究进展
 
-[本周期报告 PDF](reports/progress_20261105_reviewed/REPORT.pdf) · [报告正文](reports/progress_20261105_reviewed/REPORT.md) · [主实验与消融证据对应表](reports/progress_20261105_reviewed/EVIDENCE_MAP.md) · [阶段查阅导航](docs/ADVISOR_REVIEW_INDEX.md)
+[11 月 19 日研究进展](reports/progress_20261119/REPORT.md) · [当前进展](docs/CURRENT_PROGRESS.md) · [阶段查阅导航](docs/ADVISOR_REVIEW_INDEX.md)
 
-本周期报告介绍初始化与训练修正、整体性能、几何一致性与伪监督、新来源复验及FH结构对照。原生Geo两来源的ALL均值恢复至 **17.350 px**，同源SGP与S的组合辅助增量已有配对结果；FH均值 **29.644 px** 相对固定STLD两单模型误差均值 **25.646 px** 仍有差距。一个来源的FULL/NO_FH完成各自完整课程，结果呈指标取舍。原生FH误差及来源间变化仍有待进一步分析。后续拟结合这些结果明确主实验条件，并补充相应的结构和损失对照。
+从两套新预热权重出发，各自对照是否开启教师伪监督。在几何一致性已开启时，加入伪监督使 AoP 平均误差分别降低 **0.604° 和 0.236°**。固定追加训练也在两套初态上降低了 FH、ALL、AoP 的平均误差。加入锚角监督后，两套初态的 FH 平均误差分别降低 **0.409 和 0.185 px**，FH 的 p95 都升高。FH 增强块的结果随初态改变，与 STLD 的匹配条件比较仍待完成。
+
+## 2026-11-05 阶段结果
+
+[阶段报告 PDF](reports/progress_20261105_reviewed/REPORT.pdf) · [报告正文](reports/progress_20261105_reviewed/REPORT.md) · [主实验与消融证据对应表](reports/progress_20261105_reviewed/EVIDENCE_MAP.md)
 
 ## 2026-11-05 专项结果快照
 
@@ -26,7 +30,7 @@ A/B 主实验各完成五条件；扩展按预算以 **partial** 关闭。A 完�
 ## 如何阅读与复核
 
 - [阶段查阅导航](docs/ADVISOR_REVIEW_INDEX.md)：按研究问题查看证据与限制。
-- [数值表](reports/progress_20261105/KEY_COMPARISONS.md)与[CSV](reports/progress_20261105/KEY_COMPARISONS.csv)：区分模型身份、误差平均、坐标集成、边际p95与配对差值p95。
+- [11 月 5 日专项数值表](reports/progress_20261105/KEY_COMPARISONS.md)与[CSV](reports/progress_20261105/KEY_COMPARISONS.csv)按模型身份列出误差平均、坐标集成及两种 p95 比较。
 - [源码导航](docs/CODE_MAP.md)：公开 strict 核心、历史实现与当前可复核部分。
 - [B组合函数](src/geoequi_ld/fh_radius_postprocess.py)及[合成测试](tests/test_fh_radius_postprocess.py)：精确提取封存组合逻辑；不包含四端点推理或完整生产训练入口。
 - [来源与发布范围](docs/ATTRIBUTION_AND_RELEASE_SCOPE.md)、[方法引用](reports/progress_20261105/REFERENCES.md)与[MIT LICENSE](LICENSE)。
