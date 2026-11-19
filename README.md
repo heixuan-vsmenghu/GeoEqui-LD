@@ -4,7 +4,7 @@
 
 ## 本周期研究进展
 
-[11 月 19 日研究进展](reports/progress_20261119/REPORT.md) · [当前进展](docs/CURRENT_PROGRESS.md) · [阶段查阅导航](docs/ADVISOR_REVIEW_INDEX.md)
+[11 月 19 日研究进展](reports/progress_20261119/REPORT.md) · [两页 PDF](reports/progress_20261119/REPORT.pdf) · [当前进展](docs/CURRENT_PROGRESS.md) · [阶段查阅导航](docs/ADVISOR_REVIEW_INDEX.md)
 
 从两套新预热权重出发，各自对照是否开启教师伪监督。在几何一致性已开启时，加入伪监督使 AoP 平均误差分别降低 **0.604° 和 0.236°**。固定追加训练也在两套初态上降低了 FH、ALL、AoP 的平均误差。加入锚角监督后，两套初态的 FH 平均误差分别降低 **0.409 和 0.185 px**，FH 的 p95 都升高。FH 增强块的结果随初态改变，与 STLD 的匹配条件比较仍待完成。
 

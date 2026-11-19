@@ -2,6 +2,8 @@
 
 ## 2026-11-19 研究进展
 
+[阶段报告 PDF](../reports/progress_20261119/REPORT.pdf)
+
 [阶段正文](../reports/progress_20261119/REPORT.md)列出[教师伪监督的 AoP 复验](../reports/progress_20261119/REPORT.md#1-教师伪监督对-aop-的作用)、[FH 定位与外部参照](../reports/progress_20261119/REPORT.md#2-fh-定位的改善与剩余差距)及[FH 结构消融](../reports/progress_20261119/REPORT.md#3-fh-增强结构的作用)。追加训练的起点比较和同期对照分别列出，锚角监督同时报告 FH 均值、p95、最大误差及完整 AoP。验证沿用固定的 100 张开发图像，没有新增 Testing。
 
 ## 2026-11-05 阶段记录
