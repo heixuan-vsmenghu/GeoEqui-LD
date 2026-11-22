@@ -1,5 +1,11 @@
 # 阶段查阅导航
 
+## 2026-11-22 胎头定位与产程进展角
+
+[两页 PDF](../reports/progress_20261122/REPORT.pdf) · [三日进展正文](../reports/progress_20261122/REPORT.md) · [开发 100 张完整对照表](../reports/progress_20261122/COMPARISONS.md)
+
+第一张表比较各方法的原生输出，第二张表给各定位器使用同一分割器。正文另列两个训练起点的骨缘监督实验，以及换一批图后胎头和角度的变化。
+
 ## 2026-11-19 研究进展
 
 [阶段报告 PDF](../reports/progress_20261119/REPORT.pdf)

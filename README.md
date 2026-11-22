@@ -4,6 +4,12 @@
 
 ## 本周期研究进展
 
+[11 月 22 日三日进展](reports/progress_20261122/REPORT.md) · [两页 PDF](reports/progress_20261122/REPORT.pdf) · [全部 11 个参照配置](reports/progress_20261122/COMPARISONS.md)
+
+在 100 张开发原图上，GeoEqui-LD 与 UCD_Med 组合的胎头平均误差为 **17.21 像素**，进展角平均误差为 **4.71°**，均低于两份原生 STLD。给各方法配上同一分割器后，胎头点逐图相同，角度差距缩小。另 50 张图上，使用相同的三视图取点方法时，Geo 的角度误差比双 STLD 高 **0.138°**。旧 STLD 训练时用过这 50 张图的标注，同等训练条件下的复验仍待完成。
+
+### 11 月 19 日阶段记录
+
 [11 月 19 日研究进展](reports/progress_20261119/REPORT.md) · [两页 PDF](reports/progress_20261119/REPORT.pdf) · [当前进展](docs/CURRENT_PROGRESS.md) · [阶段查阅导航](docs/ADVISOR_REVIEW_INDEX.md)
 
 从两套新预热权重出发，各自对照是否开启教师伪监督。在几何一致性已开启时，加入伪监督使 AoP 平均误差分别降低 **0.604° 和 0.236°**。固定追加训练也在两套初态上降低了 FH、ALL、AoP 的平均误差。加入锚角监督后，两套初态的 FH 平均误差分别降低 **0.409 和 0.185 px**，FH 的 p95 都升高。FH 增强块的结果随初态改变，与 STLD 的匹配条件比较仍待完成。
